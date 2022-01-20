@@ -52,6 +52,16 @@ bench:
 		go test $(LDFLAGS) -bench=BenchmarkMemKeySizes .
 .PHONY: bench
 
+# bench is the basic tests that shouldn't crash an aws instance
+bench:
+LDFLAGS += -ldflags " -w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb"
+	cd benchmarks && \
+		go test $(LDFLAGS) -tags rocksdb -bench=RandomBytes . && \
+		go test $(LDFLAGS) -tags rocksdb -bench=Small . && \
+		go test $(LDFLAGS) -tags rocksdb -bench=Medium . && \
+		go test $(LDFLAGS) -tags rocksdb -bench=BenchmarkMemKeySizes .
+.PHONY: bench
+
 # fullbench is extra tests needing lots of memory and to run locally
 fullbench:
 	cd benchmarks && \
