@@ -11,6 +11,7 @@ CMDFLAGS := -ldflags -X TENDERMINT_IAVL_COLORS_ON=on
 LDFLAGS := -ldflags "-X github.com/cosmos/iavl.Version=$(VERSION) -X github.com/cosmos/iavl.Commit=$(COMMIT) -X github.com/cosmos/iavl.Branch=$(BRANCH)"
 
 all: lint test install
+bench: goleveldb rocksdb
 
 install:
 ifeq ($(COLORS_ON),)
@@ -44,22 +45,22 @@ lint:
 .PHONY: lint
 
 # bench is the basic tests that shouldn't crash an aws instance
-bench:
+goleveldb:
 	cd benchmarks && \
 		go test $(LDFLAGS) -bench=RandomBytes . && \
 		go test $(LDFLAGS) -bench=Small . && \
 		go test $(LDFLAGS) -bench=Medium . && \
 		go test $(LDFLAGS) -bench=BenchmarkMemKeySizes .
-.PHONY: bench
+.PHONY: goleveldb
 
 # bench is the basic tests that shouldn't crash an aws instance
-bench: LDFLAGS += -ldflags " -w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb"
+rocksdb: LDFLAGS += -ldflags " -w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb"
 	cd benchmarks && \
 		go test $(LDFLAGS) -tags rocksdb -bench=RandomBytes . && \
 		go test $(LDFLAGS) -tags rocksdb -bench=Small . && \
 		go test $(LDFLAGS) -tags rocksdb -bench=Medium . && \
 		go test $(LDFLAGS) -tags rocksdb -bench=BenchmarkMemKeySizes .
-.PHONY: bench
+.PHONY: rocksdb
 
 # fullbench is extra tests needing lots of memory and to run locally
 fullbench:
