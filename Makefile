@@ -53,8 +53,7 @@ bench:
 .PHONY: bench
 
 # bench is the basic tests that shouldn't crash an aws instance
-bench:
-LDFLAGS += -ldflags " -w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb"
+bench: LDFLAGS += -ldflags " -w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb"
 	cd benchmarks && \
 		go test $(LDFLAGS) -tags rocksdb -bench=RandomBytes . && \
 		go test $(LDFLAGS) -tags rocksdb -bench=Small . && \
