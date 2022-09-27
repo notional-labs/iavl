@@ -3,6 +3,7 @@ package iavl
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"sort"
 	"sync"
@@ -40,6 +41,13 @@ type MutableTree struct {
 	skipFastStorageUpgrade   bool // If true, the tree will work like no fast storage and always not upgrade fast storage
 
 	mtx sync.Mutex
+}
+
+func NewRootDBKeyWithVersion(version int64) []byte {
+	key := make([]byte, 0, 9)
+	binary.BigEndian.PutUint64(key, uint64(version))
+
+	return key
 }
 
 // NewMutableTree returns a new tree with the specified cache size and datastore.
@@ -350,10 +358,12 @@ func (tree *MutableTree) remove(key []byte) (value []byte, orphaned []*Node, rem
 	tree.addUnsavedRemoval(key)
 
 	if newRoot == nil && newRootHash != nil {
-		tree.root, err = tree.ndb.GetNode(newRootHash)
+		dbKey := NewRootDBKeyWithVersion(tree.version + 1) // tree.version + 1 == tree.root.version
+		tree.root, err = tree.ndb.GetNode(dbKey)
 		if err != nil {
 			return nil, nil, false, err
 		}
+		tree.root.hash = newRootHash
 	} else {
 		tree.root = newRoot
 	}
@@ -514,10 +524,12 @@ func (tree *MutableTree) LazyLoadVersion(targetVersion int64) (int64, error) {
 	if len(rootHash) > 0 {
 		// If rootHash is empty then root of tree should be nil
 		// This makes `LazyLoadVersion` to do the same thing as `LoadVersion`
-		iTree.root, err = tree.ndb.GetNode(rootHash)
+		dbKey := NewRootDBKeyWithVersion(targetVersion)
+		iTree.root, err = tree.ndb.GetNode(dbKey)
 		if err != nil {
 			return 0, err
 		}
+		iTree.root.hash = rootHash
 	}
 
 	tree.orphans = map[string]int64{}
@@ -589,10 +601,12 @@ func (tree *MutableTree) LoadVersion(targetVersion int64) (int64, error) {
 	}
 
 	if len(latestRoot) != 0 {
-		t.root, err = tree.ndb.GetNode(latestRoot)
+		dbKey := NewRootDBKeyWithVersion(latestVersion)
+		t.root, err = tree.ndb.GetNode(dbKey)
 		if err != nil {
 			return 0, err
 		}
+		t.root.hash = latestRoot
 	}
 
 	tree.orphans = map[string]int64{}
@@ -754,10 +768,13 @@ func (tree *MutableTree) GetImmutable(version int64) (*ImmutableTree, error) {
 	}
 	tree.versions[version] = true
 
-	root, err := tree.ndb.GetNode(rootHash)
+	dbKey := NewRootDBKeyWithVersion(version)
+	root, err := tree.ndb.GetNode(dbKey)
 	if err != nil {
 		return nil, err
 	}
+	root.hash = rootHash
+
 	return &ImmutableTree{
 		root:                   root,
 		ndb:                    tree.ndb,

@@ -77,6 +77,7 @@ func (kf *KeyFormat) KeyBytes(segments ...[]byte) []byte {
 			n += len(s)
 		default:
 			if len(s) > l {
+				panic(len(s))
 				panic(fmt.Errorf("length of segment %X provided to KeyFormat.KeyBytes() is longer than the %d bytes "+
 					"required by layout for segment %d", s, l, i))
 			}
