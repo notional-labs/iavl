@@ -3,7 +3,6 @@ package iavl
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/binary"
 	"fmt"
 	"sort"
 	"sync"
@@ -43,11 +42,8 @@ type MutableTree struct {
 	mtx sync.Mutex
 }
 
-func NewRootDBKeyWithVersion(version int64) []byte {
-	key := make([]byte, 0, 9)
-	binary.BigEndian.PutUint64(key, uint64(version))
-
-	return key
+func NewRootNodeKeyWithVersion(version int64) []byte {
+	return nodeKeyFormat.Key(version, make([]byte, 9))
 }
 
 // NewMutableTree returns a new tree with the specified cache size and datastore.
@@ -358,8 +354,8 @@ func (tree *MutableTree) remove(key []byte) (value []byte, orphaned []*Node, rem
 	tree.addUnsavedRemoval(key)
 
 	if newRoot == nil && newRootHash != nil {
-		dbKey := NewRootDBKeyWithVersion(tree.version + 1) // tree.version + 1 == tree.root.version
-		tree.root, err = tree.ndb.GetNode(dbKey)
+		nodeKey := NewRootNodeKeyWithVersion(tree.version + 1) // tree.version + 1 == tree.root.version
+		tree.root, err = tree.ndb.GetNode(nodeKey)
 		if err != nil {
 			return nil, nil, false, err
 		}
@@ -399,11 +395,13 @@ func (tree *MutableTree) recursiveRemove(node *Node, key []byte, orphans *[]*Nod
 			return nil, nil, nil, nil, err
 		}
 
+		// if the node removed is not in this branch
 		if len(*orphans) == 0 {
 			return node.hash, node, nil, value, nil
 		}
 		*orphans = append(*orphans, node)
 		if newLeftHash == nil && newLeftNode == nil { // left node held value, was removed
+			// this node become exactly its right node if
 			return node.rightHash, node.rightNode, node.key, value, nil
 		}
 
@@ -524,8 +522,8 @@ func (tree *MutableTree) LazyLoadVersion(targetVersion int64) (int64, error) {
 	if len(rootHash) > 0 {
 		// If rootHash is empty then root of tree should be nil
 		// This makes `LazyLoadVersion` to do the same thing as `LoadVersion`
-		dbKey := NewRootDBKeyWithVersion(targetVersion)
-		iTree.root, err = tree.ndb.GetNode(dbKey)
+		nodeKey := NewRootNodeKeyWithVersion(targetVersion)
+		iTree.root, err = tree.ndb.GetNode(nodeKey)
 		if err != nil {
 			return 0, err
 		}
@@ -601,8 +599,8 @@ func (tree *MutableTree) LoadVersion(targetVersion int64) (int64, error) {
 	}
 
 	if len(latestRoot) != 0 {
-		dbKey := NewRootDBKeyWithVersion(latestVersion)
-		t.root, err = tree.ndb.GetNode(dbKey)
+		nodeKey := NewRootNodeKeyWithVersion(latestVersion)
+		t.root, err = tree.ndb.GetNode(nodeKey)
 		if err != nil {
 			return 0, err
 		}
@@ -768,8 +766,8 @@ func (tree *MutableTree) GetImmutable(version int64) (*ImmutableTree, error) {
 	}
 	tree.versions[version] = true
 
-	dbKey := NewRootDBKeyWithVersion(version)
-	root, err := tree.ndb.GetNode(dbKey)
+	nodeKey := NewRootNodeKeyWithVersion(version)
+	root, err := tree.ndb.GetNode(nodeKey)
 	if err != nil {
 		return nil, err
 	}
@@ -886,7 +884,8 @@ func (tree *MutableTree) SaveVersion() ([]byte, int64, error) {
 		}
 	} else {
 		logger.Debug("SAVE TREE %v\n", version)
-		if _, err := tree.ndb.SaveBranch(tree.root); err != nil {
+		fmt.Println(tree.root.leftNode)
+		if _, _, err := tree.ndb.SaveBranch(tree.root); err != nil {
 			return nil, 0, err
 		}
 		if err := tree.ndb.SaveOrphans(version, tree.orphans); err != nil {

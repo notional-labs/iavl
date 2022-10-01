@@ -1,9 +1,9 @@
 node.go :
-- add dbKey, path, leftchilddbkey rightchilddbkey
-- MakeNode() unmarshal leftChildDBKey, rightChildDBKey after lefthash and righthash
+- add nodeKey, path, leftchilddbkey rightchilddbkey
+- MakeNode() unmarshal leftChildNodeKey, rightChildNodeKey after lefthash and righthash
 - GetKey() return node.dbkey instead of node.hash
-- clone() clone node.leftChildDBKey and node.rightChildDBKey
-- validate() validate leftChildDBKey and rightChildDBKey
+- clone() clone node.leftChildNodeKey and node.rightChildNodeKey
+- validate() validate leftChildNodeKey and rightChildNodeKey
 - encodedSize() + size of leftKey and rightKey
 - writeBytes() marshal leftKey and rightKey after lefthash and righthash
 - String() blablabla
@@ -22,10 +22,10 @@ node.hash used to set by the hash passed in, not anymore
 ndb.nodeCache.Add(node) node here is a pointer so were good
 - SaveNode(node *Node) 
  use node.GetKey instead of node.hash
-- Has(dbKey []byte) 
+- Has(nodeKey []byte) 
 used by some of the tests
 - SaveBranch(node *Node) now set path for node recursively, set dbkey for node and use dbkey instead of hash
-- deleteNodesFrom(version int64, dbKey []byte)
+- deleteNodesFrom(version int64, nodeKey []byte)
  used by
  - DeleteVersionsFrom
 
