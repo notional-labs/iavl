@@ -4,6 +4,7 @@ package iavl
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	mrand "math/rand"
 	"sort"
 	"testing"
@@ -476,6 +477,12 @@ func TestPersistence(t *testing.T) {
 		t1.Set([]byte(key), []byte(value))
 	}
 	t1.SaveVersion()
+	fmt.Println(t1.ndb == nil)
+	fmt.Println(t1.root == nil)
+	fmt.Println(t1.root.leftNode == nil)
+
+	_, err = t1.ndb.GetNode(t1.root.leftNode.hash)
+	require.NoError(t, err)
 
 	// Load a tree
 	t2, err := NewMutableTree(db, 0)

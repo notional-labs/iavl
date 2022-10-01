@@ -66,14 +66,14 @@ type NodeEncoder func(id []byte, depth int, isLeaf bool) string
 
 // defaultNodeEncoder can encode any node unless the client overrides it
 func defaultNodeEncoder(id []byte, depth int, isLeaf bool) string {
-	prefix := " internal "
+	prefix := "- "
 	if isLeaf {
-		prefix = " leaf "
+		prefix = "* "
 	}
 	if len(id) == 0 {
-		return fmt.Sprintf("%s<nil>\n", prefix)
+		return fmt.Sprintf("%s<nil>", prefix)
 	}
-	return fmt.Sprintf("%s%X\n", prefix, id)
+	return fmt.Sprintf("%s%X", prefix, id)
 }
 
 func (t *ImmutableTree) renderNode(node *Node, indent string, depth int, encoder func([]byte, int, bool) string) ([]string, error) {
@@ -84,23 +84,21 @@ func (t *ImmutableTree) renderNode(node *Node, indent string, depth int, encoder
 	}
 	// handle leaf
 	if node.isLeaf() {
-		here := fmt.Sprintf("%s %X %d %s", prefix, node.hash, node.value, encoder(node.key, depth, true))
+		here := fmt.Sprintf("%s%s", prefix, encoder(node.key, depth, true))
 		return []string{here}, nil
 	}
 
 	// recurse on inner node
+	here := fmt.Sprintf("%s%s", prefix, encoder(node.hash, depth, false))
+	rightNode := node.rightNode
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	here := fmt.Sprintf("%s %X %d %s", prefix, node.key, node.value, encoder(node.hash, depth, false))
-
-	rightNode, err := node.getRightNode(t)
-	if err != nil {
-		return nil, err
-	}
-
-	leftNode, err := node.getLeftNode(t)
-	if err != nil {
-		return nil, err
-	}
+	leftNode := node.leftNode
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	right, err := t.renderNode(rightNode, indent, depth+1, encoder)
 	if err != nil {
