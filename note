@@ -43,3 +43,17 @@ why they set hash ?
 they set store in balance
 
 make sure dkey is set
+
+
+	z
+ x		z
+a x  
+
+
+ z	
+a z
+
+
+if there no hash re calculation then the node is nil
+
+after save version all pointer to left and right node is nil
