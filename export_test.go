@@ -38,11 +38,21 @@ func setupExportTreeBasic(t require.TestingT) *ImmutableTree {
 	tree.Set([]byte("x"), []byte{255})
 	tree.Set([]byte("z"), []byte{255})
 	tree.Set([]byte("a"), []byte{1})
+	tree.Set([]byte("b"), []byte{2})
+	tree.Set([]byte("c"), []byte{3})
 	_, _, err = tree.SaveVersion()
 	require.NoError(t, err)
-	printNodes(tree)
 
-	tree.Remove([]byte("x"))
+	// tree.Remove([]byte("x"))
+	// tree.Remove([]byte("b"))
+	tree.Set([]byte("c"), []byte{255})
+	tree.Set([]byte("d"), []byte{4})
+	// _, _, err = tree.SaveVersion()
+	// require.NoError(t, err)
+
+	// fmt.Println(tree.root.leftNode)
+
+	// fmt.Println(tree.RenderShape("", defaultNodeEncoder))
 
 	// tree.Remove([]byte("b"))
 	// tree.Set([]byte("c"), []byte{255})
