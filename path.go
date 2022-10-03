@@ -16,7 +16,7 @@ type Path struct {
 	Directions uint64
 }
 
-func RootPath() Path {
+func NewRootPath() Path {
 	return Path{
 		Depth:      0,
 		Directions: 0,
