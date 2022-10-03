@@ -71,3 +71,32 @@ can phai tinh hash moi vi left hash or right hash thay doi save branch se call d
 ko can tinh nodekey moi vi non persisted va co tra ve pointer
 left child nodekey or right child nodekey cung thay doi
 clone new version
+
+
+Key: a, Value: [1], Version: 1, Height: 0 
+Key: b, Value: [2], Version: 1, Height: 0 
+Key: c, Value: [3], Version: 1, Height: 0 ////
+Key: c, Value: [], Version: 1, Height: 1  ////
+Key: b, Value: [], Version: 2, Height: 2  ////
+Key: c, Value: [255], Version: 2, Height: 0 
+Key: d, Value: [4], Version: 2, Height: 0 
+Key: d, Value: [], Version: 2, Height: 1 
+Key: x, Value: [255], Version: 1, Height: 0 
+Key: z, Value: [255], Version: 1, Height: 0 
+Key: z, Value: [], Version: 1, Height: 1 
+Key: x, Value: [], Version: 2, Height: 2 ////
+Key: c, Value: [], Version: 2, Height: 3 ////
+
+
+
+Key: a, Value: [1], Version: 1, Height: 0 
+Key: b, Value: [2], Version: 1, Height: 0 
+Key: b, Value: [], Version: 2, Height: 1 
+Key: c, Value: [255], Version: 2, Height: 0 
+Key: d, Value: [4], Version: 2, Height: 0 
+Key: d, Value: [], Version: 2, Height: 1 
+Key: c, Value: [], Version: 2, Height: 2 
+Key: x, Value: [255], Version: 1, Height: 0 
+Key: z, Value: [255], Version: 1, Height: 0 
+Key: z, Value: [], Version: 1, Height: 1 
+Key: x, Value: [], Version: 2, Height: 3 
