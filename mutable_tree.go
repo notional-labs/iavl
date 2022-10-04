@@ -1092,6 +1092,7 @@ func (tree *MutableTree) rotateRight(node *Node) (*Node, *Node, error) {
 
 	var err error
 	// TODO: optimize balance & rotate.
+	// node that rotateRight
 	node, err = node.clone(version)
 	if err != nil {
 		return nil, nil, err
@@ -1101,14 +1102,15 @@ func (tree *MutableTree) rotateRight(node *Node) (*Node, *Node, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	// node that got removed
 	newNode, err := orphaned.clone(version)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	newNoderHash, newNoderCached := newNode.rightHash, newNode.rightNode
+	newNoderHash, newNoderCached, newNodeRightChildNodeKey := newNode.rightHash, newNode.rightNode, newNode.rightChildNodeKey
 	newNode.rightHash, newNode.rightNode = node.hash, node
-	node.leftHash, node.leftNode = newNoderHash, newNoderCached
+	node.leftHash, node.leftNode, node.leftChildNodeKey = newNoderHash, newNoderCached, newNodeRightChildNodeKey
 
 	err = node.calcHeightAndSize(tree.ImmutableTree)
 	if err != nil {
@@ -1143,9 +1145,9 @@ func (tree *MutableTree) rotateLeft(node *Node) (*Node, *Node, error) {
 		return nil, nil, err
 	}
 
-	newNodelHash, newNodelCached := newNode.leftHash, newNode.leftNode
+	newNodelHash, newNodelCached, newNodeLeftChildNodeKey := newNode.leftHash, newNode.leftNode, newNode.leftChildNodeKey
 	newNode.leftHash, newNode.leftNode = node.hash, node
-	node.rightHash, node.rightNode = newNodelHash, newNodelCached
+	node.rightHash, node.rightNode, node.rightChildNodeKey = newNodelHash, newNodelCached, newNodeLeftChildNodeKey
 
 	err = node.calcHeightAndSize(tree.ImmutableTree)
 	if err != nil {
