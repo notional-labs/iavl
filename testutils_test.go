@@ -9,8 +9,8 @@ import (
 	"sort"
 	"testing"
 
-	db "github.com/cosmos/cosmos-db"
 	"github.com/stretchr/testify/require"
+	db "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/iavl/internal/encoding"
 	iavlrand "github.com/cosmos/iavl/internal/rand"

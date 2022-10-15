@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	db "github.com/cosmos/cosmos-db"
+	db "github.com/tendermint/tm-db"
 )
 
 // maxBatchSize is the maximum size of the import batch before flushing it to the database

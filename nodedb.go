@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	dbm "github.com/cosmos/cosmos-db"
+	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/iavl/cache"
 	"github.com/cosmos/iavl/fastnode"

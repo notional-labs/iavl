@@ -8,7 +8,7 @@ import (
 	"sort"
 	"sync"
 
-	dbm "github.com/cosmos/cosmos-db"
+	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/iavl/fastnode"
 	"github.com/cosmos/iavl/internal/logger"
