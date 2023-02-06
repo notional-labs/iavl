@@ -590,6 +590,10 @@ func (ndb *nodeDB) getNextVersion(version int64) (int64, error) {
 	return 0, nil
 }
 
+func (ndb *nodeDB) allowVersionJump() bool {
+	return ndb.opts.OverwriteVersionTo != 0
+}
+
 func (ndb *nodeDB) getPreviousVersion(version int64) (int64, error) {
 	itr, err := ndb.db.ReverseIterator(
 		rootKeyFormat.Key(1),
@@ -779,7 +783,9 @@ func (ndb *nodeDB) saveRoot(hash []byte, version int64) error {
 		return err
 	}
 	if latest > 0 && version != latest+1 {
-		return fmt.Errorf("must save consecutive versions; expected %d, got %d", latest+1, version)
+		if !ndb.allowVersionJump() {
+			return fmt.Errorf("must save consecutive versions; expected %d, got %d", latest+1, version)
+		}
 	}
 
 	if err := ndb.batch.Set(ndb.rootKey(version), hash); err != nil {
