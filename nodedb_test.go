@@ -361,7 +361,7 @@ func makeHashes(b *testing.B, seed int64) [][]byte {
 
 func makeAndPopulateMutableTree(tb testing.TB) *MutableTree {
 	memDB := db.NewMemDB()
-	tree, err := NewMutableTreeWithOpts(memDB, 0, &Options{InitialVersion: 9}, false)
+	tree, err := NewMutableTreeWithOpts(memDB, 0, &Options{OverwriteVersionTo: 9}, false)
 	require.NoError(tb, err)
 
 	for i := 0; i < 1e4; i++ {

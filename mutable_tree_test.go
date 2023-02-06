@@ -262,7 +262,7 @@ func TestMutableTree_LoadVersion_Empty(t *testing.T) {
 
 func TestMutableTree_InitialVersion(t *testing.T) {
 	memDB := db.NewMemDB()
-	tree, err := NewMutableTreeWithOpts(memDB, 0, &Options{InitialVersion: 9}, false)
+	tree, err := NewMutableTreeWithOpts(memDB, 0, &Options{OverwriteVersionTo: 9}, false)
 	require.NoError(t, err)
 
 	_, err = tree.Set([]byte("a"), []byte{0x01})
@@ -278,20 +278,20 @@ func TestMutableTree_InitialVersion(t *testing.T) {
 	assert.EqualValues(t, 10, version)
 
 	// Reloading the tree with the same initial version is fine
-	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{InitialVersion: 9}, false)
+	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{OverwriteVersionTo: 9}, false)
 	require.NoError(t, err)
 	version, err = tree.Load()
 	require.NoError(t, err)
 	assert.EqualValues(t, 10, version)
 
 	// Reloading the tree with an initial version beyond the lowest should error
-	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{InitialVersion: 10}, false)
+	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{OverwriteVersionTo: 10}, false)
 	require.NoError(t, err)
 	_, err = tree.Load()
 	require.Error(t, err)
 
 	// Reloading the tree with a lower initial version is fine, and new versions can be produced
-	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{InitialVersion: 3}, false)
+	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{OverwriteVersionTo: 3}, false)
 	require.NoError(t, err)
 	version, err = tree.Load()
 	require.NoError(t, err)
@@ -1434,13 +1434,13 @@ func TestNoFastStorageUpgrade_Integration_SaveVersion_Load_Iterate_Success(t *te
 }
 
 // TestMutableTree_InitialVersion_FirstVersion demonstrate the un-intuitive behavior,
-// when InitialVersion is set the nodes created in the first version are not assigned with expected version number.
+// when OverwriteVersionTo is set the nodes created in the first version are not assigned with expected version number.
 func TestMutableTree_InitialVersion_FirstVersion(t *testing.T) {
 	db := db.NewMemDB()
 
 	initialVersion := int64(1000)
 	tree, err := NewMutableTreeWithOpts(db, 0, &Options{
-		InitialVersion: uint64(initialVersion),
+		OverwriteVersionTo: uint64(initialVersion),
 	}, true)
 	require.NoError(t, err)
 
@@ -1451,7 +1451,7 @@ func TestMutableTree_InitialVersion_FirstVersion(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, initialVersion, version)
 
-	// the nodes created at the first version are not assigned with the `InitialVersion`
+	// the nodes created at the first version are not assigned with the `OverwriteVersionTo`
 	node, err := tree.ndb.GetNode(rootHash)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), node.version)
