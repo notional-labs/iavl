@@ -42,7 +42,15 @@ func b2i(bz []byte) int {
 
 // Construct a MutableTree
 func getTestTree(cacheSize int) (*MutableTree, error) {
-	return NewMutableTreeWithOpts(db.NewMemDB(), cacheSize, nil, false)
+	tree, err := NewMutableTreeWithOpts(db.NewMemDB(), cacheSize, nil, false)
+	if err != nil {
+		return nil, err
+	}
+	_, err = tree.Load()
+	if err != nil {
+		return nil, err
+	}
+	return tree, nil
 }
 
 // Convenience for a new node

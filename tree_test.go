@@ -1538,13 +1538,16 @@ func BenchmarkTreeLoadAndDelete(b *testing.B) {
 func TestLoadVersionForOverwritingCase2(t *testing.T) {
 	require := require.New(t)
 
-	tree, _ := NewMutableTreeWithOpts(db.NewMemDB(), 0, nil, false)
+	tree, err := NewMutableTreeWithOpts(db.NewMemDB(), 0, nil, false)
+	require.NoError(err, "NewMutableTreeWithOpts should not fail")
+	_, err = tree.Load()
+	require.NoError(err, "Load should not fail")
 
 	for i := byte(0); i < 20; i++ {
 		tree.Set([]byte{i}, []byte{i})
 	}
 
-	_, _, err := tree.SaveVersion()
+	_, _, err = tree.SaveVersion()
 	require.NoError(err, "SaveVersion should not fail")
 
 	for i := byte(0); i < 20; i++ {
@@ -1860,6 +1863,8 @@ func TestNodeCacheStatisic(t *testing.T) {
 			db, err := db.NewDB("test", db.MemDBBackend, "")
 			require.NoError(t, err)
 			mt, err := NewMutableTreeWithOpts(db, tc.cacheSize, opts, false)
+			require.NoError(t, err)
+			_, err = mt.Load()
 			require.NoError(t, err)
 
 			for i := 0; i < numKeyVals; i++ {

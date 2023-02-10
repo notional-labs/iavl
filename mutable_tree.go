@@ -489,8 +489,9 @@ func (tree *MutableTree) LoadVersion(targetVersion int64) (int64, error) {
 	overwriteVersionTo := int64(tree.ndb.opts.OverwriteVersionTo)
 	if overwriteVersionTo != 0 {
 		if overwriteVersionTo < latestVersion {
-			return latestVersion, fmt.Errorf("cannot overwrite version to version smaller lastest version")
+			return latestVersion, fmt.Errorf("cannot overwrite version to version smaller than lastest version")
 		}
+		fmt.Println("set")
 		t.version = overwriteVersionTo
 	}
 
@@ -510,7 +511,7 @@ func (tree *MutableTree) LoadVersion(targetVersion int64) (int64, error) {
 			return 0, err
 		}
 	}
-
+	fmt.Println("tree.version", tree.version)
 	return latestVersion, nil
 }
 
@@ -715,6 +716,7 @@ func (tree *MutableTree) GetVersioned(key []byte, version int64) ([]byte, error)
 // SaveVersion saves a new tree version to disk, based on the current state of
 // the tree. Returns the hash and new version number.
 func (tree *MutableTree) SaveVersion() ([]byte, int64, error) {
+	fmt.Println(tree.version)
 	version := tree.version + 1
 
 	if tree.VersionExists(version) {

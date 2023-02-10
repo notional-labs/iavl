@@ -363,6 +363,8 @@ func makeAndPopulateMutableTree(tb testing.TB) *MutableTree {
 	memDB := db.NewMemDB()
 	tree, err := NewMutableTreeWithOpts(memDB, 0, &Options{OverwriteVersionTo: 9}, false)
 	require.NoError(tb, err)
+	_, err = tree.Load()
+	require.NoError(tb, err)
 
 	for i := 0; i < 1e4; i++ {
 		buf := make([]byte, 0, (i/255)+1)

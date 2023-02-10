@@ -36,6 +36,8 @@ func setupMutableTree(t *testing.T, skipFastStorageUpgrade bool) *MutableTree {
 	memDB := db.NewMemDB()
 	tree, err := NewMutableTree(memDB, 0, skipFastStorageUpgrade)
 	require.NoError(t, err)
+	_, err = tree.Load()
+	require.NoError(t, err)
 	return tree
 }
 
@@ -264,12 +266,14 @@ func TestMutableTree_InitialVersion(t *testing.T) {
 	memDB := db.NewMemDB()
 	tree, err := NewMutableTreeWithOpts(memDB, 0, &Options{OverwriteVersionTo: 9}, false)
 	require.NoError(t, err)
+	_, err = tree.Load()
+	require.NoError(t, err)
 
 	_, err = tree.Set([]byte("a"), []byte{0x01})
 	require.NoError(t, err)
 	_, version, err := tree.SaveVersion()
 	require.NoError(t, err)
-	assert.EqualValues(t, 9, version)
+	assert.EqualValues(t, 10, version)
 
 	_, err = tree.Set([]byte("b"), []byte{0x02})
 	require.NoError(t, err)
@@ -307,8 +311,10 @@ func TestMutableTree_InitialVersion(t *testing.T) {
 func TestMutableTree_SetInitialVersion(t *testing.T) {
 	tree := setupMutableTree(t, false)
 	tree.SetInitialVersion(9)
+	_, err := tree.Load()
+	require.NoError(t, err)
 
-	_, err := tree.Set([]byte("a"), []byte{0x01})
+	_, err = tree.Set([]byte("a"), []byte{0x01})
 	require.NoError(t, err)
 	_, version, err := tree.SaveVersion()
 	require.NoError(t, err)
@@ -1442,6 +1448,8 @@ func TestMutableTree_InitialVersion_FirstVersion(t *testing.T) {
 	tree, err := NewMutableTreeWithOpts(db, 0, &Options{
 		OverwriteVersionTo: uint64(initialVersion),
 	}, true)
+	require.NoError(t, err)
+	_, err = tree.Load()
 	require.NoError(t, err)
 
 	_, err = tree.Set([]byte("hello"), []byte("world"))
