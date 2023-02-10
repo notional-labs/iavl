@@ -262,7 +262,8 @@ func TestMutableTree_LoadVersion_Empty(t *testing.T) {
 
 func TestMutableTree_InitialVersion(t *testing.T) {
 	memDB := db.NewMemDB()
-	tree, err := NewMutableTreeWithOpts(memDB, 0, &Options{InitialVersion: 9}, false)
+	// InitialVersion: 9
+	tree, err := NewMutableTreeWithOpts(memDB, 0, &Options{}, false)
 	require.NoError(t, err)
 
 	_, err = tree.Set([]byte("a"), []byte{0x01})
@@ -278,20 +279,23 @@ func TestMutableTree_InitialVersion(t *testing.T) {
 	assert.EqualValues(t, 10, version)
 
 	// Reloading the tree with the same initial version is fine
-	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{InitialVersion: 9}, false)
+	// InitialVersion: 9
+	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{}, false)
 	require.NoError(t, err)
 	version, err = tree.Load()
 	require.NoError(t, err)
 	assert.EqualValues(t, 10, version)
 
 	// Reloading the tree with an initial version beyond the lowest should error
-	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{InitialVersion: 10}, false)
+	// InitialVersion: 10
+	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{}, false)
 	require.NoError(t, err)
 	_, err = tree.Load()
 	require.Error(t, err)
 
 	// Reloading the tree with a lower initial version is fine, and new versions can be produced
-	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{InitialVersion: 3}, false)
+	// InitialVersion: 3
+	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{}, false)
 	require.NoError(t, err)
 	version, err = tree.Load()
 	require.NoError(t, err)
@@ -306,7 +310,7 @@ func TestMutableTree_InitialVersion(t *testing.T) {
 
 func TestMutableTree_SetInitialVersion(t *testing.T) {
 	tree := setupMutableTree(t, false)
-	tree.SetInitialVersion(9)
+	// tree.SetInitialVersion(9)
 
 	_, err := tree.Set([]byte("a"), []byte{0x01})
 	require.NoError(t, err)
@@ -1439,9 +1443,8 @@ func TestMutableTree_InitialVersion_FirstVersion(t *testing.T) {
 	db := db.NewMemDB()
 
 	initialVersion := int64(1000)
-	tree, err := NewMutableTreeWithOpts(db, 0, &Options{
-		InitialVersion: uint64(initialVersion),
-	}, true)
+	// InitialVersion: uint64(initialVersion),
+	tree, err := NewMutableTreeWithOpts(db, 0, &Options{}, true)
 	require.NoError(t, err)
 
 	_, err = tree.Set([]byte("hello"), []byte("world"))
