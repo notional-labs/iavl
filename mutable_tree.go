@@ -534,6 +534,36 @@ func (tree *MutableTree) LoadVersionForOverwriting(targetVersion int64) error {
 	return nil
 }
 
+func (tree *MutableTree) isLoaded() (bool, error) {
+	latestVersion, err := tree.ndb.getLatestVersion()
+	if err != nil {
+		return false, err
+	}
+	// if latestVersion is 0, loaded is no different than no loaded
+	if latestVersion == 0 {
+		return true, nil
+	}
+	if tree.version != 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
+// OverwriteVersionTo overwrite the version of a versioned tree
+func (tree *MutableTree) OverwriteVersionTo(version int64) error {
+	isLoaded, err := tree.isLoaded()
+	if err != nil {
+		return err
+	}
+	if !isLoaded {
+		// since the tree is not loaded, it's unversioned
+		// there's no use in overwriting the version of tree
+		return fmt.Errorf("cannot overwrite version to unversioned MutableTree")
+	}
+	tree.version = version
+	return nil
+}
+
 // Returns true if the tree may be auto-upgraded, false otherwise
 // An example of when an upgrade may be performed is when we are enaling fast storage for the first time or
 // need to overwrite fast nodes due to mismatch with live state.
