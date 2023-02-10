@@ -560,7 +560,7 @@ func (tree *MutableTree) OverwriteVersionTo(version int64) error {
 		// there's no use in overwriting the version of tree
 		return fmt.Errorf("cannot overwrite version to unversioned MutableTree")
 	}
-	latestVersion, err := tree.ndb.getLatestVersion()
+	latestVersion, _ := tree.ndb.getLatestVersion()
 	if version < latestVersion {
 		return fmt.Errorf("cannot overwrite version to past version")
 	}
