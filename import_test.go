@@ -28,6 +28,9 @@ func ExampleImporter() {
 		// handle err
 	}
 	exporter, err := itree.Export()
+	if err != nil {
+		// handle err
+	}
 	defer exporter.Close()
 	exported := []*ExportNode{}
 	for {

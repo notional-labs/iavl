@@ -610,7 +610,7 @@ func (tree *MutableTree) LazyLoadVersionForOverwriting(targetVersion int64) (int
 // enableFastStorageAndCommitIfNotEnabled if nodeDB doesn't mark fast storage as enabled, enable it, and commit the update.
 // Checks whether the fast cache on disk matches latest live state. If not, deletes all existing fast nodes and repopulates them
 // from latest tree.
-// nolint: unparam
+
 func (tree *MutableTree) enableFastStorageAndCommitIfNotEnabled() (bool, error) {
 	// If there is a mismatch between which fast nodes are on disk and the live state due to temporary
 	// downgrade and subsequent re-upgrade, we cannot know for sure which fast nodes have been removed while downgraded,
@@ -835,7 +835,6 @@ func (tree *MutableTree) saveFastNodeVersion() error {
 	}
 	return tree.ndb.setFastStorageVersionToBatch()
 }
-
 
 func (tree *MutableTree) getUnsavedFastNodeAdditions() map[string]*FastNode {
 	return tree.unsavedFastNodeAdditions

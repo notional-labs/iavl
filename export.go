@@ -12,9 +12,7 @@ import (
 const exportBufferSize = 32
 
 // ExportDone is returned by Exporter.Next() when all items have been exported.
-//
-//nolint:revive
-var ExportDone = errors.New("export is complete") //nolint:golint
+var ExportDone = errors.New("export is complete") //nolint:revive,stylecheck
 
 // ErrNotInitalizedTree when chains introduce a store without initializing data
 var ErrNotInitalizedTree = errors.New("iavl/export newExporter failed to create")

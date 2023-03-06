@@ -84,7 +84,7 @@ func OpenDB(dir string) (dbm.DB, error) {
 	return db, nil
 }
 
-// nolint: deadcode
+//nolint: deadcode
 func PrintDBStats(db dbm.DB) {
 	count := 0
 	prefix := map[string]int{}

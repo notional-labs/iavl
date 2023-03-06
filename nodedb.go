@@ -964,7 +964,6 @@ func (ndb *nodeDB) decrVersionReaders(version int64) {
 
 // Utility and test functions
 
-
 func (ndb *nodeDB) leafNodes() ([]*Node, error) {
 	leaves := []*Node{}
 
@@ -981,7 +980,6 @@ func (ndb *nodeDB) leafNodes() ([]*Node, error) {
 	return leaves, nil
 }
 
-
 func (ndb *nodeDB) nodes() ([]*Node, error) {
 	nodes := []*Node{}
 
@@ -995,7 +993,6 @@ func (ndb *nodeDB) nodes() ([]*Node, error) {
 
 	return nodes, nil
 }
-
 
 func (ndb *nodeDB) orphans() ([][]byte, error) {
 	orphans := [][]byte{}
