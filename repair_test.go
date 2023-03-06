@@ -32,7 +32,7 @@ func TestRepair013Orphans(t *testing.T) {
 	assert.EqualValues(t, 8, repaired)
 
 	// Load the database.
-	tree, err := NewMutableTreeWithOpts(db, 0, &Options{Sync: true}, false)
+	tree, err := NewMutableTreeWithOpts(db, 0, &Options{Sync: true})
 	require.NoError(t, err)
 	version, err := tree.Load()
 	require.NoError(t, err)
@@ -169,7 +169,7 @@ func copyDB(src, dest string) error {
 	if err != nil {
 		return err
 	}
-	err = os.MkdirAll(dest, 0777)
+	err = os.MkdirAll(dest, 0o777)
 	if err != nil {
 		return err
 	}

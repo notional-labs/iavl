@@ -190,9 +190,7 @@ func (tree *MutableTree) Iterate(fn func(key []byte, value []byte) bool) (stoppe
 // Iterator returns an iterator over the mutable tree.
 // CONTRACT: no updates are made to the tree while an iterator is active.
 func (tree *MutableTree) Iterator(start, end []byte, ascending bool) (dbm.Iterator, error) {
-
 	return NewUnsavedFastIterator(start, end, ascending, tree.ndb, tree.unsavedFastNodeAdditions, tree.unsavedFastNodeRemovals), nil
-
 }
 
 func (tree *MutableTree) set(key []byte, value []byte) (orphans []*Node, updated bool, err error) {
@@ -217,7 +215,6 @@ func (tree *MutableTree) recursiveSet(node *Node, key []byte, value []byte, orph
 	version := tree.version + 1
 
 	if node.isLeaf() {
-
 		switch bytes.Compare(key, node.key) {
 		case -1:
 			return &Node{
@@ -453,7 +450,6 @@ func (tree *MutableTree) LazyLoadVersion(targetVersion int64) (int64, error) {
 	// no versions have been saved if the latest version is non-positive
 	if latestVersion <= 0 {
 		if targetVersion <= 0 {
-
 			return 0, nil
 		}
 		return 0, fmt.Errorf("no versions found while trying to load %v", targetVersion)
@@ -506,7 +502,6 @@ func (tree *MutableTree) LoadVersion(targetVersion int64) (int64, error) {
 
 	if len(roots) == 0 {
 		if targetVersion <= 0 {
-
 			return 0, nil
 		}
 		return 0, fmt.Errorf("no versions found while trying to load %v", targetVersion)
@@ -617,7 +612,6 @@ func (tree *MutableTree) LazyLoadVersionForOverwriting(targetVersion int64) (int
 // from latest tree.
 // nolint: unparam
 func (tree *MutableTree) enableFastStorageAndCommitIfNotEnabled() (bool, error) {
-
 	// If there is a mismatch between which fast nodes are on disk and the live state due to temporary
 	// downgrade and subsequent re-upgrade, we cannot know for sure which fast nodes have been removed while downgraded,
 	// Therefore, there might exist stale fast nodes on disk. As a result, to avoid persisting the stale state, it might
@@ -721,7 +715,6 @@ func (tree *MutableTree) Rollback() {
 		}
 	}
 	tree.orphans = map[string]int64{}
-
 }
 
 // GetVersioned gets the value at the specified key and version. The returned value must not be
@@ -843,13 +836,14 @@ func (tree *MutableTree) saveFastNodeVersion() error {
 	return tree.ndb.setFastStorageVersionToBatch()
 }
 
-// nolint: unused
+
 func (tree *MutableTree) getUnsavedFastNodeAdditions() map[string]*FastNode {
 	return tree.unsavedFastNodeAdditions
 }
 
 // getUnsavedFastNodeRemovals returns unsaved FastNodes to remove
-// nolint: unused
+//
+
 func (tree *MutableTree) getUnsavedFastNodeRemovals() map[string]interface{} {
 	return tree.unsavedFastNodeRemovals
 }

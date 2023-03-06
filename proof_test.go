@@ -140,10 +140,10 @@ func TestTreeKeyInRangeProofs(t *testing.T) {
 	// For spacing:
 	T := 10
 	// disable: don't use underscores in Go names; var nil______ should be nil (golint)
-	// nolint
+	//nolint
 	nil______ := []byte(nil)
 
-	cases := []struct { // nolint:maligned
+	cases := []struct { //nolint:maligned
 		start byte
 		end   byte
 		pkeys []byte // proof keys, one byte per key.
@@ -318,7 +318,6 @@ func (bz byteslices) Less(i, j int) bool {
 	}
 }
 
-//nolint:unused
 func (bz byteslices) Swap(i, j int) {
 	bz[j], bz[i] = bz[i], bz[j]
 }

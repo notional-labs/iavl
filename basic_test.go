@@ -170,7 +170,6 @@ func TestBasic(t *testing.T) {
 }
 
 func TestUnit(t *testing.T) {
-
 	expectHash := func(tree *ImmutableTree, hashCount int64) {
 		// ensure number of new hash calculations is as expected.
 		hash, count, err := tree.root.hashWithCount()
@@ -259,7 +258,6 @@ func TestUnit(t *testing.T) {
 	require.NoError(t, err)
 	expectRemove(t11, 4, "((1 2) (3 5))", 2)
 	expectRemove(t11, 3, "((1 2) (4 5))", 1)
-
 }
 
 func TestRemove(t *testing.T) {
@@ -290,7 +288,6 @@ func TestRemove(t *testing.T) {
 }
 
 func TestIntegration(t *testing.T) {
-
 	type record struct {
 		key   string
 		value string
@@ -472,7 +469,7 @@ func TestPersistence(t *testing.T) {
 	}
 
 	// Construct some tree and save it
-	t1, err := NewMutableTree(db, 0, false)
+	t1, err := NewMutableTree(db, 0)
 	require.NoError(t, err)
 	for key, value := range records {
 		t1.Set([]byte(key), []byte(value))
@@ -480,7 +477,7 @@ func TestPersistence(t *testing.T) {
 	t1.SaveVersion()
 
 	// Load a tree
-	t2, err := NewMutableTree(db, 0, false)
+	t2, err := NewMutableTree(db, 0)
 	require.NoError(t, err)
 	t2.Load()
 	for key, value := range records {
@@ -493,7 +490,6 @@ func TestPersistence(t *testing.T) {
 }
 
 func TestProof(t *testing.T) {
-
 	// Construct some random tree
 	tree, err := getTestTree(100)
 	require.NoError(t, err)
@@ -527,7 +523,7 @@ func TestProof(t *testing.T) {
 
 func TestTreeProof(t *testing.T) {
 	db := db.NewMemDB()
-	tree, err := NewMutableTree(db, 100, false)
+	tree, err := NewMutableTree(db, 100)
 	require.NoError(t, err)
 	hash, err := tree.Hash()
 	require.NoError(t, err)

@@ -82,7 +82,7 @@ func testRandomOperations(t *testing.T, randSeed int64) {
 		if !(r.Float64() < cacheChance) {
 			cacheSize = 0
 		}
-		tree, err = NewMutableTreeWithOpts(levelDB, cacheSize, options, false)
+		tree, err = NewMutableTreeWithOpts(levelDB, cacheSize, options)
 		require.NoError(t, err)
 		version, err = tree.Load()
 		require.NoError(t, err)
@@ -338,9 +338,7 @@ func assertEmptyDatabase(t *testing.T, tree *MutableTree) {
 	iter, err := tree.ndb.db.Iterator(nil, nil)
 	require.NoError(t, err)
 
-	var (
-		foundKeys []string
-	)
+	var foundKeys []string
 	for ; iter.Valid(); iter.Next() {
 		foundKeys = append(foundKeys, string(iter.Key()))
 	}

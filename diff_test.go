@@ -8,8 +8,8 @@ import (
 	"sort"
 	"testing"
 
-	db "github.com/tendermint/tm-db"
 	"github.com/stretchr/testify/require"
+	db "github.com/tendermint/tm-db"
 )
 
 // TestDiffRoundTrip generate random change sets, build an iavl tree versions,
@@ -19,7 +19,7 @@ func TestDiffRoundTrip(t *testing.T) {
 
 	// apply changeSets to tree
 	db := db.NewMemDB()
-	tree, err := NewMutableTree(db, 0, true)
+	tree, err := NewMutableTree(db, 0)
 	require.NoError(t, err)
 	for _, cs := range changeSets {
 		for _, pair := range cs.Pairs {
@@ -38,7 +38,7 @@ func TestDiffRoundTrip(t *testing.T) {
 
 	// extract change sets from db
 	var extractChangeSets []ChangeSet
-	tree2 := NewImmutableTree(db, 0, true)
+	tree2 := NewImmutableTree(db, 0)
 	err = tree2.TraverseStateChanges(0, math.MaxInt64, func(version int64, changeSet *ChangeSet) error {
 		extractChangeSets = append(extractChangeSets, *changeSet)
 		return nil

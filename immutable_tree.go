@@ -21,15 +21,14 @@ type ImmutableTree struct {
 }
 
 // NewImmutableTree creates both in-memory and persistent instances
-func NewImmutableTree(db dbm.DB, cacheSize int, skipFastStorageUpgrade bool) *ImmutableTree {
+func NewImmutableTree(db dbm.DB, cacheSize int) *ImmutableTree {
 	if db == nil {
 		// In-memory Tree.
 		return &ImmutableTree{}
 	}
 	return &ImmutableTree{
 		// NodeDB-backed Tree.
-		ndb:                    newNodeDB(db, cacheSize, nil),
-		skipFastStorageUpgrade: skipFastStorageUpgrade,
+		ndb: newNodeDB(db, cacheSize, nil),
 	}
 }
 
@@ -239,7 +238,6 @@ func (t *ImmutableTree) Iterate(fn func(key []byte, value []byte) bool) (bool, e
 		if fn(itr.Key(), itr.Value()) {
 			return true, nil
 		}
-
 	}
 	return false, nil
 }
@@ -322,7 +320,7 @@ func (t *ImmutableTree) clone() *ImmutableTree {
 
 // nodeSize is like Size, but includes inner nodes too.
 //
-//nolint:unused
+
 func (t *ImmutableTree) nodeSize() int {
 	size := 0
 	t.root.traverse(t, true, func(n *Node) bool {

@@ -1,14 +1,13 @@
-// nolint:errcheck
+//nolint:errcheck
 package iavl
 
 import (
 	"bytes"
 	"fmt"
+	"math/rand"
 	"runtime"
 	"sort"
 	"testing"
-
-	"math/rand"
 
 	"github.com/stretchr/testify/require"
 	db "github.com/tendermint/tm-db"
@@ -43,7 +42,7 @@ func b2i(bz []byte) int {
 
 // Construct a MutableTree
 func getTestTree(cacheSize int) (*MutableTree, error) {
-	return NewMutableTreeWithOpts(db.NewMemDB(), cacheSize, nil, false)
+	return NewMutableTreeWithOpts(db.NewMemDB(), cacheSize, nil)
 }
 
 // Convenience for a new node
@@ -328,7 +327,7 @@ func benchmarkImmutableAvlTreeWithDB(b *testing.B, db db.DB) {
 
 	b.StopTimer()
 
-	t, err := NewMutableTree(db, 100000, false)
+	t, err := NewMutableTree(db, 100000)
 	require.NoError(b, err)
 
 	value := []byte{}

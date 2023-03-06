@@ -66,9 +66,7 @@ var (
 	rootKeyFormat = NewKeyFormat('r', int64Size) // r<version>
 )
 
-var (
-	errInvalidFastStorageVersion = fmt.Sprintf("Fast storage version must be in the format <storage version>%s<latest fast cache version>", fastStorageVersionDelimiter)
-)
+var errInvalidFastStorageVersion = fmt.Sprintf("Fast storage version must be in the format <storage version>%s<latest fast cache version>", fastStorageVersionDelimiter)
 
 type nodeDB struct {
 	mtx            sync.Mutex       // Read/write lock.
@@ -794,7 +792,8 @@ func (ndb *nodeDB) traverseOrphans(fn func(keyWithPrefix, v []byte) error) error
 }
 
 // Traverse fast nodes and return error if any, nil otherwise
-// nolint: unused
+//
+
 func (ndb *nodeDB) traverseFastNodes(fn func(k, v []byte) error) error {
 	return ndb.traversePrefix(fastKeyFormat.Key(), fn)
 }
@@ -805,7 +804,8 @@ func (ndb *nodeDB) traverseOrphansVersion(version int64, fn func(k, v []byte) er
 }
 
 // Traverse all keys and return error if any, nil otherwise
-// nolint: unused
+//
+
 func (ndb *nodeDB) traverse(fn func(key, value []byte) error) error {
 	return ndb.traverseRange(nil, nil, fn)
 }
@@ -964,7 +964,7 @@ func (ndb *nodeDB) decrVersionReaders(version int64) {
 
 // Utility and test functions
 
-// nolint: unused
+
 func (ndb *nodeDB) leafNodes() ([]*Node, error) {
 	leaves := []*Node{}
 
@@ -974,7 +974,6 @@ func (ndb *nodeDB) leafNodes() ([]*Node, error) {
 		}
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -982,7 +981,7 @@ func (ndb *nodeDB) leafNodes() ([]*Node, error) {
 	return leaves, nil
 }
 
-// nolint: unused
+
 func (ndb *nodeDB) nodes() ([]*Node, error) {
 	nodes := []*Node{}
 
@@ -990,7 +989,6 @@ func (ndb *nodeDB) nodes() ([]*Node, error) {
 		nodes = append(nodes, node)
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -998,7 +996,7 @@ func (ndb *nodeDB) nodes() ([]*Node, error) {
 	return nodes, nil
 }
 
-// nolint: unused
+
 func (ndb *nodeDB) orphans() ([][]byte, error) {
 	orphans := [][]byte{}
 
@@ -1006,7 +1004,6 @@ func (ndb *nodeDB) orphans() ([][]byte, error) {
 		orphans = append(orphans, v)
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -1018,14 +1015,13 @@ func (ndb *nodeDB) orphans() ([][]byte, error) {
 // NOTE: DB cannot implement Size() because
 // mutations are not always synchronous.
 //
-//nolint:unused
+
 func (ndb *nodeDB) size() int {
 	size := 0
 	err := ndb.traverse(func(k, v []byte) error {
 		size++
 		return nil
 	})
-
 	if err != nil {
 		return -1
 	}
@@ -1044,7 +1040,6 @@ func (ndb *nodeDB) traverseNodes(fn func(hash []byte, node *Node) error) error {
 		nodes = append(nodes, node)
 		return nil
 	})
-
 	if err != nil {
 		return err
 	}
@@ -1107,7 +1102,6 @@ func (ndb *nodeDB) String() (string, error) {
 		fmt.Fprintf(buf, "%s: %x\n", key, value)
 		return nil
 	})
-
 	if err != nil {
 		return "", err
 	}

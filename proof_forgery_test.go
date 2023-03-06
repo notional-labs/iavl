@@ -16,7 +16,7 @@ func TestProofFogery(t *testing.T) {
 	source := rand.NewSource(0)
 	r := rand.New(source)
 	cacheSize := 0
-	tree, err := iavl.NewMutableTreeWithOpts(db.NewMemDB(), cacheSize, nil, false)
+	tree, err := iavl.NewMutableTreeWithOpts(db.NewMemDB(), cacheSize, nil)
 	require.NoError(t, err)
 
 	// two keys only
