@@ -1,5 +1,5 @@
 run:
-  tests: false
+  tests: true
   # timeout for analysis, e.g. 30s, 5m, default is 1m
   timeout: 5m
 
@@ -7,16 +7,14 @@ linters:
   disable-all: true
   enable:
     - bodyclose
-    - deadcode
     - depguard
     - dogsled
-    # - errcheck
+    - errcheck
     - exportloopref
     - goconst
     - gocritic
-    - gofmt
-    - goimports
     - gosec
+    - gofumpt
     - gosimple
     - govet
     - ineffassign
@@ -26,13 +24,11 @@ linters:
     - prealloc
     - revive
     - staticcheck
-    - structcheck
     - stylecheck
     - typecheck
     - unconvert
     - unparam
     - unused
-    # - wsl
 
 issues:
   exclude-rules:

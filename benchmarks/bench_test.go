@@ -24,7 +24,7 @@ func randBytes(length int) []byte {
 }
 
 func prepareTree(b *testing.B, db db.DB, size, keyLen, dataLen int) (*iavl.MutableTree, [][]byte) {
-	t, err := iavl.NewMutableTreeWithOpts(db, size, nil, false)
+	t, err := iavl.NewMutableTreeWithOpts(db, size, nil)
 	require.NoError(b, err)
 	keys := make([][]byte, size)
 
@@ -43,7 +43,6 @@ func commitTree(b *testing.B, t *iavl.MutableTree) {
 	t.Hash()
 
 	_, version, err := t.SaveVersion()
-
 	if err != nil {
 		b.Errorf("Can't save: %v", err)
 	}
@@ -326,7 +325,7 @@ func runBenchmarks(b *testing.B, benchmarks []benchmark) {
 		// prepare a dir for the db and cleanup afterwards
 		dirName := fmt.Sprintf("./%s-db", prefix)
 		if (bb.dbType == db.RocksDBBackend) || (bb.dbType == db.CLevelDBBackend) || (bb.dbType == db.BoltDBBackend) {
-			_ = os.Mkdir(dirName, 0755)
+			_ = os.Mkdir(dirName, 0o755)
 		}
 
 		defer func() {
