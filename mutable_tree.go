@@ -392,7 +392,7 @@ func (tree *MutableTree) Load() (int64, error) {
 }
 
 // Returns the version number of the specific version found
-func (tree *MutableTree) LoadVersion(targetVersion int64, loadFullTree bool) (int64, error) {
+func (tree *MutableTree) LoadVersion(targetVersion int64, loadEntireTreeToMemory bool) (int64, error) {
 	firstVersion, err := tree.ndb.getFirstVersion()
 	if err != nil {
 		return 0, err
@@ -453,7 +453,7 @@ func (tree *MutableTree) LoadVersion(targetVersion int64, loadFullTree bool) (in
 			return 0, err
 		}
 
-		if loadFullTree {
+		if loadEntireTreeToMemory {
 			root.loadEntireTreeInMemory(iTree)
 		}
 
