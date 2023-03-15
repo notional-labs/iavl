@@ -603,6 +603,7 @@ func (node *Node) traverseInRange(tree *ImmutableTree, start, end []byte, ascend
 	return stop
 }
 
+// loadEntireTreeInMemory iterates over all nodes in the tree and fetches those from disk, that do not exist in-memory
 func (node *Node) loadEntireTreeInMemory(t *ImmutableTree) error {
 	if node == nil {
 		return nil
