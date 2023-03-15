@@ -1464,3 +1464,29 @@ func TestMutableTree_InitialVersion_FirstVersion(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, initialVersion+1, node.nodeKey.version)
 }
+
+func TestFullTreeLoad(t *testing.T) {
+	tree := setupMutableTree(t, true)
+
+	for i := 0; i < 1000000; i++ {
+		_, err := tree.Set([]byte(fmt.Sprintf("k%d", i)), []byte(fmt.Sprintf("v%d", i)))
+		require.NoError(t, err)
+	}
+
+	_, _, err := tree.SaveVersion()
+	require.NoError(t, err)
+
+	_, err = tree.LoadVersion(0, false)
+	require.NoError(t, err)
+
+	itr, err := tree.Iterator(nil, nil, true)
+	require.NoError(t, err)
+
+	defer itr.Close()
+
+	valuesSeen := 0
+	for ; itr.Valid(); itr.Next() {
+		valuesSeen++
+	}
+	fmt.Println(valuesSeen)
+}

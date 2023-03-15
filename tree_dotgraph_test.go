@@ -1,7 +1,6 @@
 package iavl
 
 import (
-	"io"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -16,5 +15,6 @@ func TestWriteDOTGraph(t *testing.T) {
 		key := []byte{ikey}
 		tree.Set(key, key) //nolint:errcheck
 	}
-	WriteDOTGraph(io.Discard, tree.ImmutableTree, []PathToLeaf{})
+	tree.SaveVersion()
+	WriteDOTGraphToFile("/tmp/tree_one.dot", tree.ImmutableTree)
 }
