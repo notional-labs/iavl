@@ -69,7 +69,7 @@ func TestIteratorConcurrency(t *testing.T) {
 		t.Skip("skipping test in short mode.")
 	}
 	tree := setupMutableTree(t, true)
-	_, err := tree.LoadVersion(0)
+	_, err := tree.LoadVersion(0, false)
 	require.NoError(t, err)
 	// So much slower
 	wg := new(sync.WaitGroup)
@@ -220,13 +220,13 @@ func TestMutableTree_DeleteVersionsTo(t *testing.T) {
 
 	// ensure even versions have been deleted
 	for v := int64(1); v <= versionToDelete; v++ {
-		_, err := tree.LoadVersion(v)
+		_, err := tree.LoadVersion(v, false)
 		require.Error(t, err)
 	}
 
 	// ensure odd number versions exist and we can query for all set entries
 	for _, v := range []int64{9, 10} {
-		_, err := tree.LoadVersion(v)
+		_, err := tree.LoadVersion(v, false)
 		require.NoError(t, err)
 
 		for _, e := range versionEntries[v] {
@@ -243,15 +243,15 @@ func TestMutableTree_DeleteVersionsTo(t *testing.T) {
 func TestMutableTree_LoadVersion_Empty(t *testing.T) {
 	tree := setupMutableTree(t, false)
 
-	version, err := tree.LoadVersion(0)
+	version, err := tree.LoadVersion(0, false)
 	require.NoError(t, err)
 	assert.EqualValues(t, 0, version)
 
-	version, err = tree.LoadVersion(-1)
+	version, err = tree.LoadVersion(-1, false)
 	require.NoError(t, err)
 	assert.EqualValues(t, 0, version)
 
-	_, err = tree.LoadVersion(3)
+	_, err = tree.LoadVersion(3, false)
 	require.Error(t, err)
 }
 
@@ -370,7 +370,7 @@ func checkGetVersioned(t *testing.T, tree *MutableTree, version int64, key, valu
 
 func TestMutableTree_GetVersioned(t *testing.T) {
 	tree := prepareTree(t)
-	ver, err := tree.LoadVersion(1)
+	ver, err := tree.LoadVersion(1, false)
 	require.True(t, ver == 2)
 	require.NoError(t, err)
 	// check key of unloaded version
@@ -379,7 +379,7 @@ func TestMutableTree_GetVersioned(t *testing.T) {
 	checkGetVersioned(t, tree, 3, []byte{1}, nil)
 
 	tree = prepareTree(t)
-	ver, err = tree.LoadVersion(2)
+	ver, err = tree.LoadVersion(2, false)
 	require.True(t, ver == 2)
 	require.NoError(t, err)
 	checkGetVersioned(t, tree, 1, []byte{1}, []byte("a"))
@@ -389,7 +389,7 @@ func TestMutableTree_GetVersioned(t *testing.T) {
 
 func TestMutableTree_DeleteVersion(t *testing.T) {
 	tree := prepareTree(t)
-	ver, err := tree.LoadVersion(2)
+	ver, err := tree.LoadVersion(2, false)
 	require.True(t, ver == 2)
 	require.NoError(t, err)
 
@@ -412,13 +412,13 @@ func TestMutableTree_LazyLoadVersionWithEmptyTree(t *testing.T) {
 
 	newTree1, err := NewMutableTree(mdb, 1000, false)
 	require.NoError(t, err)
-	v2, err := newTree1.LoadVersion(1)
+	v2, err := newTree1.LoadVersion(1, false)
 	require.NoError(t, err)
 	require.True(t, v1 == v2)
 
 	newTree2, err := NewMutableTree(mdb, 1000, false)
 	require.NoError(t, err)
-	v2, err = newTree1.LoadVersion(1)
+	v2, err = newTree1.LoadVersion(1, false)
 	require.NoError(t, err)
 	require.True(t, v1 == v2)
 
@@ -1112,7 +1112,7 @@ func TestUpgradeStorageToFast_Integration_Upgraded_GetFast_Success(t *testing.T)
 	require.NoError(t, err)
 
 	// LazyLoadVersion - should auto enable fast storage
-	version, err := sut.LoadVersion(1)
+	version, err := sut.LoadVersion(1, false)
 	require.NoError(t, err)
 
 	isFastCacheEnabled, err = tree.IsFastCacheEnabled()
@@ -1299,7 +1299,7 @@ func TestNoFastStorageUpgrade_Integration_SaveVersion_Load_Get_Success(t *testin
 	require.NoError(t, err)
 
 	// LazyLoadVersion - should not auto enable fast storage
-	version, err := sut.LoadVersion(1)
+	version, err := sut.LoadVersion(1, false)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), version)
 
@@ -1317,7 +1317,7 @@ func TestNoFastStorageUpgrade_Integration_SaveVersion_Load_Get_Success(t *testin
 	require.False(t, isFastCacheEnabled)
 
 	// LoadVersion - should not auto enable fast storage
-	version, err = sut.LoadVersion(1)
+	version, err = sut.LoadVersion(1, false)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), version)
 
