@@ -167,15 +167,15 @@ func TestMutableTree_DeleteVersions(t *testing.T) {
 func TestMutableTree_LoadVersion_Empty(t *testing.T) {
 	tree := setupMutableTree(t)
 
-	version, err := tree.LoadVersion(0)
+	version, err := tree.LoadVersion(0, false)
 	require.NoError(t, err)
 	assert.EqualValues(t, 0, version)
 
-	version, err = tree.LoadVersion(-1)
+	version, err = tree.LoadVersion(-1, false)
 	require.NoError(t, err)
 	assert.EqualValues(t, 0, version)
 
-	_, err = tree.LoadVersion(3)
+	_, err = tree.LoadVersion(3, false)
 	require.Error(t, err)
 }
 
@@ -218,7 +218,7 @@ func TestMutableTree_DeleteVersionsRange(t *testing.T) {
 
 	tree, err = NewMutableTree(mdb, 0, false)
 	require.NoError(err)
-	targetVersion, err := tree.LoadVersion(int64(maxLength))
+	targetVersion, err := tree.LoadVersion(int64(maxLength), false)
 	require.NoError(err)
 	require.Equal(targetVersion, int64(maxLength), "targetVersion shouldn't larger than the actual tree latest version")
 
@@ -431,7 +431,7 @@ func TestMutableTree_LazyLoadVersionWithEmptyTree(t *testing.T) {
 
 	newTree2, err := NewMutableTree(mdb, 1000, false)
 	require.NoError(t, err)
-	v2, err = newTree1.LoadVersion(1)
+	v2, err = newTree1.LoadVersion(1, false)
 	require.NoError(t, err)
 	require.True(t, v1 == v2)
 
@@ -1330,7 +1330,7 @@ func TestNoFastStorageUpgrade_Integration_SaveVersion_Load_Get_Success(t *testin
 	require.False(t, isFastCacheEnabled)
 
 	// LoadVersion - should not auto enable fast storage
-	version, err = sut.LoadVersion(1)
+	version, err = sut.LoadVersion(1, false)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), version)
 
@@ -1440,4 +1440,30 @@ func TestNoFastStorageUpgrade_Integration_SaveVersion_Load_Iterate_Success(t *te
 			return false
 		})
 	})
+}
+
+func TestFullTreeLoad(t *testing.T) {
+	tree := setupMutableTree(t)
+
+	for i := 0; i < 1000000; i++ {
+		_, err := tree.Set([]byte(fmt.Sprintf("k%d", i)), []byte(fmt.Sprintf("v%d", i)))
+		require.NoError(t, err)
+	}
+
+	_, _, err := tree.SaveVersion()
+	require.NoError(t, err)
+
+	_, err = tree.LoadVersion(0, false)
+	require.NoError(t, err)
+
+	itr, err := tree.Iterator(nil, nil, true)
+	require.NoError(t, err)
+
+	defer itr.Close()
+
+	valuesSeen := 0
+	for ; itr.Valid(); itr.Next() {
+		valuesSeen++
+	}
+	fmt.Println(valuesSeen)
 }

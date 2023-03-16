@@ -124,7 +124,7 @@ func ReadTree(dir string, version int, prefix []byte) (*iavl.MutableTree, error)
 	if err != nil {
 		return nil, err
 	}
-	ver, err := tree.LoadVersion(int64(version))
+	ver, err := tree.LoadVersion(int64(version), false)
 	fmt.Printf("Got version: %d\n", ver)
 	return tree, err
 }

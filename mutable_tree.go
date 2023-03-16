@@ -456,7 +456,7 @@ func (tree *MutableTree) recursiveRemove(node *Node, key []byte, orphans *[]*Nod
 
 // Load the latest versioned tree from disk.
 func (tree *MutableTree) Load() (int64, error) {
-	return tree.LoadVersion(int64(0))
+	return tree.LoadVersion(int64(0), false)
 }
 
 // LazyLoadVersion attempts to lazy load only the specified target version
@@ -536,7 +536,7 @@ func (tree *MutableTree) LazyLoadVersion(targetVersion int64) (int64, error) {
 }
 
 // Returns the version number of the latest version found
-func (tree *MutableTree) LoadVersion(targetVersion int64) (int64, error) {
+func (tree *MutableTree) LoadVersion(targetVersion int64, loadEntireTreeToMemory bool) (int64, error) {
 	roots, err := tree.ndb.getRoots()
 	if err != nil {
 		return 0, err
@@ -590,10 +590,15 @@ func (tree *MutableTree) LoadVersion(targetVersion int64) (int64, error) {
 	}
 
 	if len(latestRoot) != 0 {
-		t.root, err = tree.ndb.GetNode(latestRoot)
+		root, err := tree.ndb.GetNode(latestRoot)
 		if err != nil {
 			return 0, err
 		}
+		if loadEntireTreeToMemory {
+			root.loadEntireTreeInMemory(t)
+		}
+
+		t.root = root
 	}
 
 	tree.orphans = map[string]int64{}
@@ -614,7 +619,7 @@ func (tree *MutableTree) LoadVersion(targetVersion int64) (int64, error) {
 // LoadVersionForOverwriting attempts to load a tree at a previously committed
 // version, or the latest version below it. Any versions greater than targetVersion will be deleted.
 func (tree *MutableTree) LoadVersionForOverwriting(targetVersion int64) (int64, error) {
-	latestVersion, err := tree.LoadVersion(targetVersion)
+	latestVersion, err := tree.LoadVersion(targetVersion, false)
 	if err != nil {
 		return latestVersion, err
 	}
