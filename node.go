@@ -527,14 +527,18 @@ func (node *Node) writeBytes(w io.Writer) error {
 
 // maxEncodedSize returns the maximum encoded size
 // node encoded layout:
-// header: height(1) + stream vbyte (version, size_lo, size_hi, keyLen),
-// body: key + [leftHash(32), rightHash(32)], [value]
+// for all nodes: height(1) + stream vbyte ( size_lo, size_hi, key_len) + hash(32) + key
+// additional size for internal node:
+// left_node_key (stream vbyte (version_lo, version_hi, nonce)) + right_node_key (stream vbyte (version_lo, version_hi, nonce))
+// additional size for leaf node:
+// value_len
 func (node *Node) maxEncodedSize() int {
-	size := 1 + 1 + 4*4 + len(node.key)
+	// height(1) + stream vbyte ( size_lo, size_hi, key_len) + hash(32) + key
+	size := 1 + (1 + 3*4) + 32 + len(node.key)
 	if node.isLeaf() {
 		return size + len(node.value)
 	}
-	return size + hashSize*2
+	return size + 2*(1+3*4)
 }
 
 // Encode node to bytes
@@ -558,22 +562,33 @@ func (node *Node) Encode() ([]byte, error) {
 	copy(buf[offset:], node.key)
 	offset += keyLenght
 
+	copy(buf[offset:], node.hash)
+	offset += hashSize
+
 	if node.isLeaf() {
 		copy(buf[offset:], node.value)
 		offset += len(node.value)
 	} else {
-		if node.leftHash == nil {
+		if node.leftNodeKey == nil {
 			return nil, ErrLeftHashIsNil
 		}
-		if node.rightHash == nil {
+		offset += node.leftNodeKey.EncodeTo(buf[offset:])
+
+		if node.rightNodeKey == nil {
 			return nil, ErrRightHashIsNil
 		}
-		copy(buf[offset:], node.leftHash)
-		offset += SizeHash
-		copy(buf[offset:], node.rightHash)
-		offset += SizeHash
+		node.rightNodeKey.EncodeTo(buf[offset:])
 	}
 	return buf[:offset], nil
+}
+
+func (n *NodeKey) EncodeTo(out []byte) (size int) {
+	out[0] = vbyteencode.PutUint32Scalar([]uint32{
+		uint32(n.version),
+		uint32(n.version >> 32),
+		uint32(n.nonce),
+	}, out[1:], 3)
+	return vbyteshared.ControlByteToSize(out[0])
 }
 
 func (node *Node) getLeftNode(t *ImmutableTree) (*Node, error) {
