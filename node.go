@@ -13,6 +13,8 @@ import (
 	"math"
 
 	"github.com/cosmos/iavl/cache"
+	vbyteencode "github.com/theMPatel/streamvbyte-simdgo/pkg/encode"
+	vbyteshared "github.com/theMPatel/streamvbyte-simdgo/pkg/shared"
 
 	"github.com/cosmos/iavl/internal/encoding"
 )
@@ -521,6 +523,57 @@ func (node *Node) writeBytes(w io.Writer) error {
 		}
 	}
 	return nil
+}
+
+// maxEncodedSize returns the maximum encoded size
+// node encoded layout:
+// header: height(1) + stream vbyte (version, size_lo, size_hi, keyLen),
+// body: key + [leftHash(32), rightHash(32)], [value]
+func (node *Node) maxEncodedSize() int {
+	size := 1 + 1 + 4*4 + len(node.key)
+	if node.isLeaf() {
+		return size + len(node.value)
+	}
+	return size + hashSize*2
+}
+
+// Encode node to bytes
+
+func (node *Node) Encode() ([]byte, error) {
+	if node == nil {
+		return nil, errors.New("cannot write nil node")
+	}
+	keyLenght := len(node.key)
+
+	buf := make([]byte, node.maxEncodedSize())
+	buf[0] = byte(node.subtreeHeight)
+
+	buf[1] = vbyteencode.PutUint32Scalar([]uint32{
+		uint32(node.size),
+		uint32(node.size >> 32),
+		uint32(keyLenght),
+	}, buf[2:], 3)
+	offset := 2 + vbyteshared.ControlByteToSize(buf[1])
+
+	copy(buf[offset:], node.key)
+	offset += keyLenght
+
+	if node.isLeaf() {
+		copy(buf[offset:], node.value)
+		offset += len(node.value)
+	} else {
+		if node.leftHash == nil {
+			return nil, ErrLeftHashIsNil
+		}
+		if node.rightHash == nil {
+			return nil, ErrRightHashIsNil
+		}
+		copy(buf[offset:], node.leftHash)
+		offset += SizeHash
+		copy(buf[offset:], node.rightHash)
+		offset += SizeHash
+	}
+	return buf[:offset], nil
 }
 
 func (node *Node) getLeftNode(t *ImmutableTree) (*Node, error) {
