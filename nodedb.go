@@ -143,6 +143,21 @@ func (ndb *nodeDB) GetNode(hash []byte) (*Node, error) {
 
 	return node, nil
 }
+func (ndb *nodeDB) GetNodeWithChildrens(hash []byte) (*Node, error) {
+	node, err := ndb.GetNode(hash)
+	if err != nil {
+		return nil, err
+	}
+
+	if node.isLeaf() {
+		return node, nil
+	}
+
+	node.rightNode, err = ndb.GetNode(node.rightHash)
+	node.leftNode, err = ndb.GetNode(node.leftHash)
+
+	return node, nil
+}
 
 func (ndb *nodeDB) GetFastNode(key []byte) (*FastNode, error) {
 	if !ndb.hasUpgradedToFastStorage() {
@@ -1008,6 +1023,7 @@ func (ndb *nodeDB) orphans() ([][]byte, error) {
 // Not efficient.
 // NOTE: DB cannot implement Size() because
 // mutations are not always synchronous.
+//
 //nolint:unused
 func (ndb *nodeDB) size() int {
 	size := 0

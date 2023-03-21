@@ -760,7 +760,7 @@ func (tree *MutableTree) GetImmutable(version int64) (*ImmutableTree, error) {
 	}
 	tree.versions[version] = true
 
-	root, err := tree.ndb.GetNode(rootHash)
+	root, err := tree.ndb.GetNodeWithChildrens(rootHash)
 	if err != nil {
 		return nil, err
 	}
