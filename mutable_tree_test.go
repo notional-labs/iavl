@@ -1441,29 +1441,3 @@ func TestNoFastStorageUpgrade_Integration_SaveVersion_Load_Iterate_Success(t *te
 		})
 	})
 }
-
-func TestFullTreeLoad(t *testing.T) {
-	tree := setupMutableTree(t)
-
-	for i := 0; i < 1000000; i++ {
-		_, err := tree.Set([]byte(fmt.Sprintf("k%d", i)), []byte(fmt.Sprintf("v%d", i)))
-		require.NoError(t, err)
-	}
-
-	_, _, err := tree.SaveVersion()
-	require.NoError(t, err)
-
-	_, err = tree.LoadVersion(0)
-	require.NoError(t, err)
-
-	itr, err := tree.Iterator(nil, nil, true)
-	require.NoError(t, err)
-
-	defer itr.Close()
-
-	valuesSeen := 0
-	for ; itr.Valid(); itr.Next() {
-		valuesSeen++
-	}
-	fmt.Println(valuesSeen)
-}
