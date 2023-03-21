@@ -1432,7 +1432,7 @@ func TestOverwrite(t *testing.T) {
 	// Reload tree at version 1
 	tree, err = NewMutableTree(mdb, 0, false)
 	require.NoError(err)
-	_, err = tree.LoadVersion(int64(1), false)
+	_, err = tree.LoadVersion(int64(1))
 	require.NoError(err, "LoadVersion should not fail")
 
 	// Attempt to put a different kv pair into the tree and save
@@ -1467,7 +1467,7 @@ func TestOverwriteEmpty(t *testing.T) {
 	require.NoError(err)
 
 	// Load version 1 and attempt to save a different key
-	_, err = tree.LoadVersion(1, false)
+	_, err = tree.LoadVersion(1)
 	require.NoError(err)
 	tree.Set([]byte("foo"), []byte("bar"))
 	_, _, err = tree.SaveVersion()
@@ -1528,7 +1528,7 @@ func TestLoadVersionForOverwriting(t *testing.T) {
 	// Reload tree at version 50, the latest tree version is 52
 	tree, err = NewMutableTree(mdb, 0, false)
 	require.NoError(err)
-	_, err = tree.LoadVersion(int64(maxLength/2), false)
+	_, err = tree.LoadVersion(int64(maxLength / 2))
 	require.NoError(err, "LoadVersion should not fail")
 
 	tree.Set([]byte("key49"), []byte("value49 different"))
@@ -1575,7 +1575,7 @@ func TestDeleteVersionsCompare(t *testing.T) {
 
 		tree, err = NewMutableTree(mdb, 0, false)
 		require.NoError(err)
-		targetVersion, err := tree.LoadVersion(int64(maxLength), false)
+		targetVersion, err := tree.LoadVersion(int64(maxLength))
 		require.NoError(err)
 		require.Equal(targetVersion, int64(maxLength), "targetVersion shouldn't larger than the actual tree latest version")
 
@@ -1602,7 +1602,7 @@ func TestDeleteVersionsCompare(t *testing.T) {
 
 		tree, err = NewMutableTree(mdb, 0, false)
 		require.NoError(err)
-		targetVersion, err := tree.LoadVersion(int64(maxLength), false)
+		targetVersion, err := tree.LoadVersion(int64(maxLength))
 		require.NoError(err)
 		require.Equal(targetVersion, int64(maxLength), "targetVersion shouldn't larger than the actual tree latest version")
 
@@ -1631,7 +1631,7 @@ func TestDeleteVersionsCompare(t *testing.T) {
 
 		tree, err = NewMutableTree(mdb, 0, false)
 		require.NoError(err)
-		targetVersion, err := tree.LoadVersion(int64(maxLength), false)
+		targetVersion, err := tree.LoadVersion(int64(maxLength))
 		require.NoError(err)
 		require.Equal(targetVersion, int64(maxLength), "targetVersion shouldn't larger than the actual tree latest version")
 

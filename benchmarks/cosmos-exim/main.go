@@ -95,7 +95,7 @@ func runExport(dbPath string) (int64, map[string][]*iavl.ExportNode, error) {
 	if err != nil {
 		return 0, nil, err
 	}
-	version, err := tree.LoadVersion(0, false)
+	version, err := tree.LoadVersion(0)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -114,7 +114,7 @@ func runExport(dbPath string) (int64, map[string][]*iavl.ExportNode, error) {
 		stats := Stats{}
 		export := make([]*iavl.ExportNode, 0, 100000)
 
-		storeVersion, err := tree.LoadVersion(0, false)
+		storeVersion, err := tree.LoadVersion(0)
 		if err != nil {
 			return 0, nil, err
 		}
