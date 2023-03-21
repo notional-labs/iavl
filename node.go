@@ -603,6 +603,46 @@ func (node *Node) traverseInRange(tree *ImmutableTree, start, end []byte, ascend
 	return stop
 }
 
+// loadEntireTreeInMemory iterates over all nodes in the tree and fetches those from disk, that do not exist in-memory
+func (node *Node) loadEntireTreeInMemory(t *ImmutableTree) error {
+	if node == nil {
+		return nil
+	}
+
+	// If it is a leaf node, we stop loading this branch
+	if node.isLeaf() {
+		return nil
+	}
+
+	if node.leftNode != nil {
+		// Implies the current leftNode is in memory, recursively bring the subtree of this node to memory
+		node.leftNode.loadEntireTreeInMemory(t)
+	} else {
+		// If it is not in memory, get it from disk
+		leftNode, err := node.getLeftNode(t)
+		if err != nil {
+			return err
+		}
+
+		node.leftNode = leftNode
+	}
+
+	if node.rightNode != nil {
+		// Implies the current rightNode is in memory, recursively bring the subtree of this node to memory
+		node.rightNode.loadEntireTreeInMemory(t)
+	} else {
+		// If it is not in memory, get it from disk
+		rightNode, err := node.getRightNode(t)
+		if err != nil {
+			return err
+		}
+
+		node.rightNode = rightNode
+	}
+
+	return nil
+}
+
 var (
 	ErrCloneLeafNode     = fmt.Errorf("attempt to copy a leaf node")
 	ErrEmptyChild        = fmt.Errorf("found an empty child")

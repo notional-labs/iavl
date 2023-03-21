@@ -1308,7 +1308,7 @@ func TestLoadVersion(t *testing.T) {
 	require.NoError(t, err)
 	maxVersions := 10
 
-	version, err := tree.LoadVersion(0)
+	version, err := tree.LoadVersion(0, false)
 	require.NoError(t, err, "unexpected error")
 	require.Equal(t, version, int64(0), "expected latest version to be zero")
 
@@ -1320,7 +1320,7 @@ func TestLoadVersion(t *testing.T) {
 	}
 
 	// require the ability to load the latest version
-	version, err = tree.LoadVersion(int64(maxVersions))
+	version, err = tree.LoadVersion(int64(maxVersions), false)
 	require.NoError(t, err, "unexpected error when lazy loading version")
 	require.Equal(t, version, int64(maxVersions))
 
@@ -1329,7 +1329,7 @@ func TestLoadVersion(t *testing.T) {
 	require.Equal(t, value, []byte(fmt.Sprintf("value_%d", maxVersions)), "unexpected value")
 
 	// require the ability to load an older version
-	version, err = tree.LoadVersion(int64(maxVersions - 1))
+	version, err = tree.LoadVersion(int64(maxVersions-1), false)
 	require.NoError(t, err, "unexpected error when loading version")
 	require.Equal(t, version, int64(maxVersions))
 
@@ -1338,7 +1338,7 @@ func TestLoadVersion(t *testing.T) {
 	require.Equal(t, value, []byte(fmt.Sprintf("value_%d", maxVersions-1)), "unexpected value")
 
 	// require the inability to load a non-valid version
-	version, err = tree.LoadVersion(int64(maxVersions + 1))
+	version, err = tree.LoadVersion(int64(maxVersions+1), false)
 	require.Error(t, err, "expected error when loading version")
 	require.Equal(t, version, int64(maxVersions))
 }
@@ -1363,7 +1363,7 @@ func TestOverwrite(t *testing.T) {
 	// Reload tree at version 1
 	tree, err = NewMutableTree(mdb, 0, false)
 	require.NoError(err)
-	_, err = tree.LoadVersion(int64(1))
+	_, err = tree.LoadVersion(int64(1), false)
 	require.NoError(err, "LoadVersion should not fail")
 
 	// Attempt to put a different kv pair into the tree and save
@@ -1398,7 +1398,7 @@ func TestOverwriteEmpty(t *testing.T) {
 	require.NoError(err)
 
 	// Load version 1 and attempt to save a different key
-	_, err = tree.LoadVersion(1)
+	_, err = tree.LoadVersion(1, false)
 	require.NoError(err)
 	tree.Set([]byte("foo"), []byte("bar"))
 	_, _, err = tree.SaveVersion()
@@ -1458,7 +1458,7 @@ func TestLoadVersionForOverwriting(t *testing.T) {
 	// Reload tree at version 50, the latest tree version is 52
 	tree, err = NewMutableTree(mdb, 0, false)
 	require.NoError(err)
-	_, err = tree.LoadVersion(int64(maxLength / 2))
+	_, err = tree.LoadVersion(int64(maxLength/2), false)
 	require.NoError(err, "LoadVersion should not fail")
 
 	tree.Set([]byte("key49"), []byte("value49 different"))

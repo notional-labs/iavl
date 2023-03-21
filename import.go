@@ -188,7 +188,7 @@ func (i *Importer) Commit() error {
 	}
 	i.tree.ndb.resetLatestVersion(i.version)
 
-	_, err = i.tree.LoadVersion(i.version)
+	_, err = i.tree.LoadVersion(i.version, false)
 	if err != nil {
 		return err
 	}

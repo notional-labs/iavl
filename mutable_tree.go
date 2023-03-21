@@ -388,11 +388,11 @@ func (tree *MutableTree) recursiveRemove(node *Node, key []byte) (newSelf *Node,
 
 // Load the latest versioned tree from disk.
 func (tree *MutableTree) Load() (int64, error) {
-	return tree.LoadVersion(int64(0))
+	return tree.LoadVersion(int64(0), false)
 }
 
 // Returns the version number of the specific version found
-func (tree *MutableTree) LoadVersion(targetVersion int64) (int64, error) {
+func (tree *MutableTree) LoadVersion(targetVersion int64, loadEntireTreeToMemory bool) (int64, error) {
 	firstVersion, err := tree.ndb.getFirstVersion()
 	if err != nil {
 		return 0, err
@@ -448,10 +448,16 @@ func (tree *MutableTree) LoadVersion(targetVersion int64) (int64, error) {
 	}
 
 	if rootNodeKey != nil {
-		iTree.root, err = tree.ndb.GetNode(rootNodeKey)
+		root, err := tree.ndb.GetNode(rootNodeKey)
 		if err != nil {
 			return 0, err
 		}
+
+		if loadEntireTreeToMemory {
+			root.loadEntireTreeInMemory(iTree)
+		}
+
+		iTree.root = root
 	}
 
 	tree.ImmutableTree = iTree
@@ -470,7 +476,7 @@ func (tree *MutableTree) LoadVersion(targetVersion int64) (int64, error) {
 // loadVersionForOverwriting attempts to load a tree at a previously committed
 // version, or the latest version below it. Any versions greater than targetVersion will be deleted.
 func (tree *MutableTree) LoadVersionForOverwriting(targetVersion int64) error {
-	if _, err := tree.LoadVersion(targetVersion); err != nil {
+	if _, err := tree.LoadVersion(targetVersion, false); err != nil {
 		return err
 	}
 
@@ -509,7 +515,6 @@ func (tree *MutableTree) IsUpgradeable() (bool, error) {
 // enableFastStorageAndCommitIfNotEnabled if nodeDB doesn't mark fast storage as enabled, enable it, and commit the update.
 // Checks whether the fast cache on disk matches latest live state. If not, deletes all existing fast nodes and repopulates them
 // from latest tree.
-
 func (tree *MutableTree) enableFastStorageAndCommitIfNotEnabled() (bool, error) {
 	isUpgradeable, err := tree.IsUpgradeable()
 	if err != nil {
