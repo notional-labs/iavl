@@ -813,6 +813,10 @@ func (tree *MutableTree) GetVersioned(key []byte, version int64) ([]byte, error)
 		if err != nil {
 			return nil, nil
 		}
+
+		fmt.Println("Checking if the tree is fully in memory")
+		fmt.Println(checkIfNodeHasAllChildrenInMemory(t.root))
+
 		value, err := t.Get(key)
 		if err != nil {
 			return nil, err
@@ -820,6 +824,29 @@ func (tree *MutableTree) GetVersioned(key []byte, version int64) ([]byte, error)
 		return value, nil
 	}
 	return nil, nil
+}
+
+func checkIfNodeHasAllChildrenInMemory(node *Node) bool {
+	if node == nil {
+		return false
+	}
+
+	if node.isLeaf() {
+		return true
+	}
+
+	if node.leftHash != nil && node.leftNode == nil {
+		return false
+	}
+
+	if node.rightHash != nil && node.rightNode == nil {
+		return false
+	}
+
+	rightExists := checkIfNodeHasAllChildrenInMemory(node.rightNode)
+	leftExists := checkIfNodeHasAllChildrenInMemory(node.leftNode)
+
+	return rightExists && leftExists
 }
 
 // SaveVersion saves a new tree version to disk, based on the current state of
