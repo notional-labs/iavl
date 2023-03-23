@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"math"
 	"math/rand"
 	"testing"
 
@@ -159,7 +160,7 @@ func TestNode_validate(t *testing.T) {
 	}
 }
 
-func BenchmarkNode_WriteBytes(b *testing.B) {
+func BenchmarkNode_Encode(b *testing.B) {
 	nk := &NodeKey{
 		version: rand.Int63n(10000000),
 		nonce:   rand.Int31n(10000000),
@@ -173,26 +174,77 @@ func BenchmarkNode_WriteBytes(b *testing.B) {
 		leftNodeKey:   nk,
 		rightNodeKey:  nk,
 	}
+	largeNk := &NodeKey{
+		version: rand.Int63n(10000000) + math.MaxUint32,
+		nonce:   rand.Int31n(10000000) + math.MaxUint16,
+	}
+	largeNode := &Node{
+		key:           iavlrand.RandBytes(25),
+		value:         iavlrand.RandBytes(100),
+		subtreeHeight: 1,
+		size:          rand.Int63n(10000000) + math.MaxUint32,
+		leftNodeKey:   largeNk,
+		rightNodeKey:  largeNk,
+	}
+
 	b.ResetTimer()
-	b.Run("OldMethod/NoPreAllocate", func(sub *testing.B) {
+	b.Run("small number", func(sub *testing.B) {
 		sub.ReportAllocs()
 		for i := 0; i < sub.N; i++ {
-			var buf bytes.Buffer
-			_ = node.writeBytes2(&buf)
+			_, _ = node.Encode()
 		}
 	})
-	b.Run("OldMethod/PreAllocate", func(sub *testing.B) {
+	b.Run("large number", func(sub *testing.B) {
 		sub.ReportAllocs()
 		for i := 0; i < sub.N; i++ {
-			var buf bytes.Buffer
-			buf.Grow(node.encodedSize())
-			_ = node.writeBytes2(&buf)
+			_, _ = largeNode.Encode()
 		}
 	})
-	b.Run("NewMethod", func(b *testing.B) {
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			node.Encode()
+}
+
+func BenchmarkNode_Decode(b *testing.B) {
+	nk := &NodeKey{
+		version: rand.Int63n(10000000),
+		nonce:   rand.Int31n(10000000),
+	}
+	node := &Node{
+		key:           iavlrand.RandBytes(25),
+		value:         iavlrand.RandBytes(100),
+		nodeKey:       nk,
+		subtreeHeight: 1,
+		size:          rand.Int63n(10000000),
+		leftNodeKey:   nk,
+		rightNodeKey:  nk,
+	}
+	largeNk := &NodeKey{
+		version: rand.Int63n(10000000) + math.MaxUint32,
+		nonce:   rand.Int31n(10000000) + math.MaxUint16,
+	}
+	largeNode := &Node{
+		key:           iavlrand.RandBytes(25),
+		value:         iavlrand.RandBytes(100),
+		subtreeHeight: 1,
+		size:          rand.Int63n(10000000) + math.MaxUint32,
+		leftNodeKey:   largeNk,
+		rightNodeKey:  largeNk,
+	}
+
+	buf, err := node.Encode()
+	require.NoError(b, err)
+	largeNodeBuf, err := largeNode.Encode()
+	require.NoError(b, err)
+
+	b.ResetTimer()
+	b.Run("small number", func(sub *testing.B) {
+		sub.ReportAllocs()
+		for i := 0; i < sub.N; i++ {
+			_, _ = MakeNode(nk, buf)
+		}
+	})
+	b.Run("large number", func(sub *testing.B) {
+		sub.ReportAllocs()
+		for i := 0; i < sub.N; i++ {
+			_, _ = MakeNode(largeNk, largeNodeBuf)
 		}
 	})
 }
