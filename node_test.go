@@ -21,6 +21,18 @@ func TestNodeKey_encode_decode(t *testing.T) {
 			version: 2,
 			nonce:   1,
 		}},
+		"big_version/small_nonce": {nodeKey: &NodeKey{
+			version: 2384892734987234,
+			nonce:   1,
+		}},
+		"small_version/big_nonce": {nodeKey: &NodeKey{
+			version: 5,
+			nonce:   948357934,
+		}},
+		"big_version/big_nonce": {nodeKey: &NodeKey{
+			version: 2384892734987234,
+			nonce:   328479213,
+		}},
 	}
 	for name, tc := range testcases {
 		t.Run(name, func(t *testing.T) {
