@@ -1,7 +1,6 @@
 package iavl
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 
@@ -63,18 +62,12 @@ func (i *Importer) writeNode(node *Node) error {
 		return err
 	}
 
-	buf := bufPool.Get().(*bytes.Buffer)
-	buf.Reset()
-	defer bufPool.Put(buf)
-
-	if err := node.writeBytes(buf); err != nil {
+	bz, err := node.Encode()
+	if err != nil {
 		return err
 	}
 
-	bytesCopy := make([]byte, buf.Len())
-	copy(bytesCopy, buf.Bytes())
-
-	if err := i.batch.Set(i.tree.ndb.nodeKey(node.nodeKey), bytesCopy); err != nil {
+	if err := i.batch.Set(i.tree.ndb.nodeKey(node.nodeKey), bz); err != nil {
 		return err
 	}
 

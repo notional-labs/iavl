@@ -179,15 +179,12 @@ func (ndb *nodeDB) SaveNode(node *Node) error {
 		return ErrNodeMissingNodeKey
 	}
 
-	// Save node bytes to db.
-	var buf bytes.Buffer
-	buf.Grow(node.encodedSize())
-
-	if err := node.writeBytes(&buf); err != nil {
+	bz, err := node.Encode()
+	if err != nil {
 		return err
 	}
 
-	if err := ndb.batch.Set(ndb.nodeKey(node.nodeKey), buf.Bytes()); err != nil {
+	if err := ndb.batch.Set(ndb.nodeKey(node.nodeKey), bz); err != nil {
 		return err
 	}
 

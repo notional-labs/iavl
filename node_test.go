@@ -13,35 +13,26 @@ import (
 	iavlrand "github.com/cosmos/iavl/internal/rand"
 )
 
-func TestNode_encodedSize(t *testing.T) {
-	node := &Node{
-		key:           iavlrand.RandBytes(10),
-		value:         iavlrand.RandBytes(10),
-		subtreeHeight: 0,
-		size:          100,
-		hash:          iavlrand.RandBytes(20),
-		nodeKey: &NodeKey{
-			version: 1,
+func TestNodeKey_encode_decode(t *testing.T) {
+	testcases := map[string]struct {
+		nodeKey *NodeKey
+	}{
+		"small_version/small_nonce": {nodeKey: &NodeKey{
+			version: 2,
 			nonce:   1,
-		},
-		leftNodeKey: &NodeKey{
-			version: 1,
-			nonce:   1,
-		},
-		leftNode: nil,
-		rightNodeKey: &NodeKey{
-			version: 1,
-			nonce:   1,
-		},
-		rightNode: nil,
+		}},
 	}
+	for name, tc := range testcases {
+		t.Run(name, func(t *testing.T) {
+			bz := [100]byte{}
+			expectedSize := EncodeNodeKeyTo(tc.nodeKey, bz[:])
+			actualNodeKey, actualSize := DecodeNodeKeyFrom(bz[:])
 
-	// leaf node
-	require.Equal(t, 25, node.encodedSize())
+			require.Equal(t, expectedSize, actualSize)
+			require.Equal(t, tc.nodeKey.String(), actualNodeKey.String())
 
-	// non-leaf node
-	node.subtreeHeight = 1
-	require.Equal(t, 39, node.encodedSize())
+		})
+	}
 }
 
 func TestNode_encode_decode(t *testing.T) {
@@ -67,8 +58,8 @@ func TestNode_encode_decode(t *testing.T) {
 				version: 1,
 				nonce:   1,
 			},
-			hash: []byte{0x70, 0x80, 0x90, 0xa0},
-		}, "060e036b657904708090a002020202", false},
+			hash: []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
+		}, "03000700036b65790102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f200001000100010001", false},
 		"leaf": {&Node{
 			subtreeHeight: 0,
 			size:          1,
@@ -79,21 +70,19 @@ func TestNode_encode_decode(t *testing.T) {
 				nonce:   1,
 			},
 			hash: []byte{0x7f, 0x68, 0x90, 0xca, 0x16, 0xde, 0xa6, 0xe8, 0x89, 0x3d, 0x96, 0xf0, 0xa3, 0xd, 0xa, 0x14, 0xe5, 0x55, 0x59, 0xfc, 0x9b, 0x83, 0x4, 0x91, 0xe3, 0xd2, 0x45, 0x1c, 0x81, 0xf6, 0xd1, 0xe},
-		}, "0002036b65790576616c7565", false},
+		}, "00000100036b657976616c7565", false},
 	}
 	for name, tc := range testcases {
-		tc := tc
 		t.Run(name, func(t *testing.T) {
-			var buf bytes.Buffer
-			err := tc.node.writeBytes(&buf)
+			bz, err := tc.node.Encode()
 			if tc.expectError {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tc.expectHex, hex.EncodeToString(buf.Bytes()))
+			require.Equal(t, tc.expectHex, hex.EncodeToString(bz))
 
-			node, err := MakeNode(tc.node.nodeKey, buf.Bytes())
+			node, err := MakeNode(tc.node.nodeKey, bz)
 			require.NoError(t, err)
 			// since key and value is always decoded to []byte{} we augment the expected struct here
 			if tc.node.key == nil {
@@ -158,27 +147,6 @@ func TestNode_validate(t *testing.T) {
 	}
 }
 
-func BenchmarkNode_encodedSize(b *testing.B) {
-	nk := &NodeKey{
-		version: rand.Int63n(10000000),
-		nonce:   rand.Int31n(10000000),
-	}
-	node := &Node{
-		key:           iavlrand.RandBytes(25),
-		value:         iavlrand.RandBytes(100),
-		nodeKey:       nk,
-		subtreeHeight: 1,
-		size:          rand.Int63n(10000000),
-		leftNodeKey:   nk,
-		rightNodeKey:  nk,
-	}
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		node.encodedSize()
-	}
-}
-
 func BenchmarkNode_WriteBytes(b *testing.B) {
 	nk := &NodeKey{
 		version: rand.Int63n(10000000),
@@ -194,19 +162,25 @@ func BenchmarkNode_WriteBytes(b *testing.B) {
 		rightNodeKey:  nk,
 	}
 	b.ResetTimer()
-	b.Run("NoPreAllocate", func(sub *testing.B) {
+	b.Run("OldMethod/NoPreAllocate", func(sub *testing.B) {
 		sub.ReportAllocs()
 		for i := 0; i < sub.N; i++ {
 			var buf bytes.Buffer
-			_ = node.writeBytes(&buf)
+			_ = node.writeBytes2(&buf)
 		}
 	})
-	b.Run("PreAllocate", func(sub *testing.B) {
+	b.Run("OldMethod/PreAllocate", func(sub *testing.B) {
 		sub.ReportAllocs()
 		for i := 0; i < sub.N; i++ {
 			var buf bytes.Buffer
 			buf.Grow(node.encodedSize())
-			_ = node.writeBytes(&buf)
+			_ = node.writeBytes2(&buf)
+		}
+	})
+	b.Run("NewMethod", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			node.Encode()
 		}
 	})
 }

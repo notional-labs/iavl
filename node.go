@@ -10,14 +10,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 
 	"github.com/cosmos/iavl/cache"
+	vbytedecode "github.com/theMPatel/streamvbyte-simdgo/pkg/decode"
 	vbyteencode "github.com/theMPatel/streamvbyte-simdgo/pkg/encode"
 	vbyteshared "github.com/theMPatel/streamvbyte-simdgo/pkg/shared"
 
 	"github.com/cosmos/iavl/internal/encoding"
 )
+
+var errBufferTooSmall = errors.New("buffer too small")
 
 // NodeKey represents a key of node in the DB.
 type NodeKey struct {
@@ -63,91 +65,76 @@ func NewNode(key []byte, value []byte) *Node {
 // The new node doesn't have its hash saved or set. The caller must set it
 // afterwards.
 func MakeNode(nodeKey *NodeKey, buf []byte) (*Node, error) {
-	// Read node header (height, size, key).
-	height, n, cause := encoding.DecodeVarint(buf)
-	if cause != nil {
-		return nil, fmt.Errorf("decoding node.height, %w", cause)
+	if len(buf) < 2 {
+		return nil, errBufferTooSmall
 	}
-	buf = buf[n:]
-	if height < int64(math.MinInt8) || height > int64(math.MaxInt8) {
-		return nil, errors.New("invalid height, must be int8")
-	}
+	subtreeHeight := int8(buf[0])
 
-	size, n, cause := encoding.DecodeVarint(buf)
-	if cause != nil {
-		return nil, fmt.Errorf("decoding node.size, %w", cause)
-	}
-	buf = buf[n:]
+	ctl := uint8(buf[1])
+	vbyteLen := vbyteshared.ControlByteToSize(ctl)
 
-	key, n, cause := encoding.DecodeBytes(buf)
-	if cause != nil {
-		return nil, fmt.Errorf("decoding node.key, %w", cause)
+	buf = buf[2:]
+	if len(buf) < vbyteLen {
+		return nil, errBufferTooSmall
 	}
-	buf = buf[n:]
+	var ints [3]uint32
+	vbytedecode.GetUint32Scalar(buf, ints[:], ctl, 3)
+	buf = buf[vbyteLen-1:]
+
+	size := int64(ints[0])
+	size |= int64(ints[1]) << 32
+	keyLen := int(ints[2])
+
+	if len(buf) < keyLen {
+		return nil, errBufferTooSmall
+	}
+	key := buf[:keyLen]
+	buf = buf[keyLen:]
 
 	node := &Node{
-		subtreeHeight: int8(height),
+		subtreeHeight: subtreeHeight,
 		size:          size,
-		nodeKey:       nodeKey,
 		key:           key,
+		nodeKey:       nodeKey,
 	}
 
 	// Read node body.
 	if node.isLeaf() {
-		val, _, cause := encoding.DecodeBytes(buf)
-		if cause != nil {
-			return nil, fmt.Errorf("decoding node.value, %w", cause)
-		}
-		node.value = val
-		// ensure take the hash for the leaf node
-		if _, err := node._hash(node.nodeKey.version); err != nil {
+		node.value = buf
+
+		if _, err := node._hash(nodeKey.version); err != nil {
 			return nil, fmt.Errorf("calculating hash error: %v", err)
 		}
-
 	} else { // Read children.
-		node.hash, n, cause = encoding.DecodeBytes(buf)
-		if cause != nil {
-			return nil, fmt.Errorf("decoding node.hash, %w", cause)
-		}
-		buf = buf[n:]
+		node.hash = buf[:hashSize]
+		buf = buf[hashSize:]
 
-		var (
-			leftNodeKey, rightNodeKey NodeKey
-			nonce                     int64
-		)
-		leftNodeKey.version, n, cause = encoding.DecodeVarint(buf)
-		if cause != nil {
-			return nil, fmt.Errorf("decoding node.leftNodeKey.version, %w", cause)
-		}
-		buf = buf[n:]
-		nonce, n, cause = encoding.DecodeVarint(buf)
-		if cause != nil {
-			return nil, fmt.Errorf("deocding node.leftNodeKey.nonce, %w", cause)
-		}
-		buf = buf[n:]
-		if nonce < int64(math.MinInt32) || nonce > int64(math.MaxInt32) {
-			return nil, errors.New("invalid nonce, must be int32")
-		}
-		leftNodeKey.nonce = int32(nonce)
+		var leftNodeKeySize int
+		node.leftNodeKey, leftNodeKeySize = DecodeNodeKeyFrom(buf[:])
+		buf = buf[leftNodeKeySize:]
 
-		rightNodeKey.version, n, cause = encoding.DecodeVarint(buf)
-		if cause != nil {
-			return nil, fmt.Errorf("decoding node.rightNodeKey.version, %w", cause)
-		}
-		buf = buf[n:]
-		nonce, _, cause = encoding.DecodeVarint(buf)
-		if cause != nil {
-			return nil, fmt.Errorf("decoding node.rightNodeKey.nonce, %w", cause)
-		}
-		if nonce < int64(math.MinInt32) || nonce > int64(math.MaxInt32) {
-			return nil, errors.New("invalid nonce, must be int32")
-		}
-		rightNodeKey.nonce = int32(nonce)
-
-		node.leftNodeKey = &leftNodeKey
-		node.rightNodeKey = &rightNodeKey
+		var rightNodeKeySize int
+		node.rightNodeKey, rightNodeKeySize = DecodeNodeKeyFrom(buf[:])
+		buf = buf[rightNodeKeySize:]
 	}
+
 	return node, nil
+}
+
+func DecodeNodeKeyFrom(buf []byte) (*NodeKey, int) {
+	ctl := buf[0]
+
+	var ints [3]uint32
+	size := vbytedecode.GetUint32Scalar(buf[1:], ints[:], ctl, 3)
+
+	version := int64(ints[0])
+	version |= int64(ints[1]) << 32
+	nonce := ints[2]
+
+	return &NodeKey{
+		version: version,
+		nonce:   int32(nonce),
+	}, size + 1
 }
 
 func (node *Node) GetKey() []byte {
@@ -469,7 +456,7 @@ func (node *Node) encodedSize() int {
 }
 
 // Writes the node as a serialized byte slice to the supplied io.Writer.
-func (node *Node) writeBytes(w io.Writer) error {
+func (node *Node) writeBytes2(w io.Writer) error {
 	if node == nil {
 		return errors.New("cannot write nil node")
 	}
@@ -527,18 +514,18 @@ func (node *Node) writeBytes(w io.Writer) error {
 
 // maxEncodedSize returns the maximum encoded size
 // node encoded layout:
-// for all nodes: height(1) + stream vbyte ( size_lo, size_hi, key_len) + hash(32) + key
+// for all nodes: height(1) + stream vbyte ( size_lo, size_hi, key_len) + key
 // additional size for internal node:
-// left_node_key (stream vbyte (version_lo, version_hi, nonce)) + right_node_key (stream vbyte (version_lo, version_hi, nonce))
+// left_node_key (stream vbyte (version_lo, version_hi, nonce)) + right_node_key (stream vbyte (version_lo, version_hi, nonce)) + hash(32)
 // additional size for leaf node:
 // value_len
 func (node *Node) maxEncodedSize() int {
-	// height(1) + stream vbyte ( size_lo, size_hi, key_len) + hash(32) + key
-	size := 1 + (1 + 3*4) + 32 + len(node.key)
+	// height(1) + stream vbyte ( size_lo, size_hi, key_len) + key
+	size := 1 + (1 + 3*4) + len(node.key)
 	if node.isLeaf() {
 		return size + len(node.value)
 	}
-	return size + 2*(1+3*4)
+	return size + 2*(1+3*4) + 32
 }
 
 // Encode node to bytes
@@ -557,32 +544,32 @@ func (node *Node) Encode() ([]byte, error) {
 		uint32(node.size >> 32),
 		uint32(keyLenght),
 	}, buf[2:], 3)
-	offset := 2 + vbyteshared.ControlByteToSize(buf[1])
+	offset := 1 + vbyteshared.ControlByteToSize(buf[1])
 
 	copy(buf[offset:], node.key)
 	offset += keyLenght
-
-	copy(buf[offset:], node.hash)
-	offset += hashSize
 
 	if node.isLeaf() {
 		copy(buf[offset:], node.value)
 		offset += len(node.value)
 	} else {
+		copy(buf[offset:], node.hash)
+		offset += hashSize
+
 		if node.leftNodeKey == nil {
 			return nil, ErrLeftHashIsNil
 		}
-		offset += node.leftNodeKey.EncodeTo(buf[offset:])
+		offset += EncodeNodeKeyTo(node.leftNodeKey, buf[offset:])
 
 		if node.rightNodeKey == nil {
 			return nil, ErrRightHashIsNil
 		}
-		node.rightNodeKey.EncodeTo(buf[offset:])
+		offset += EncodeNodeKeyTo(node.rightNodeKey, buf[offset:])
 	}
 	return buf[:offset], nil
 }
 
-func (n *NodeKey) EncodeTo(out []byte) (size int) {
+func EncodeNodeKeyTo(n *NodeKey, out []byte) (size int) {
 	out[0] = vbyteencode.PutUint32Scalar([]uint32{
 		uint32(n.version),
 		uint32(n.version >> 32),
