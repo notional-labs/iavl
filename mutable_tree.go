@@ -13,6 +13,8 @@ import (
 	"github.com/cosmos/iavl/fastnode"
 	ibytes "github.com/cosmos/iavl/internal/bytes"
 	"github.com/cosmos/iavl/internal/logger"
+	// "github.com/chrispappas/golang-generics-set/set"
+	// ics23 "github.com/confio/ics23/go"
 )
 
 // commitGap after upgrade/delete commitGap FastNodes when commit the batch
@@ -40,7 +42,9 @@ type MutableTree struct {
 	ndb                      *nodeDB
 	skipFastStorageUpgrade   bool // If true, the tree will work like no fast storage and always not upgrade fast storage
 
-	mtx sync.Mutex
+	mtx            sync.Mutex
+	tracingEnabled bool
+	witnessData    []WitnessData
 }
 
 // NewMutableTree returns a new tree with the specified cache size and datastore.
@@ -63,6 +67,8 @@ func NewMutableTreeWithOpts(db dbm.DB, cacheSize int, opts *Options, skipFastSto
 		unsavedFastNodeRemovals:  make(map[string]interface{}),
 		ndb:                      ndb,
 		skipFastStorageUpgrade:   skipFastStorageUpgrade,
+		witnessData:              make([]WitnessData, 0),
+		tracingEnabled:           false,
 	}, nil
 }
 
