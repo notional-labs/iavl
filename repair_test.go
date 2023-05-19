@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	dbm "github.com/tendermint/tm-db"
 )
 
 func TestRepair013Orphans(t *testing.T) {
@@ -23,7 +23,7 @@ func TestRepair013Orphans(t *testing.T) {
 	err = copyDB("testdata/0.13-orphans.db", filepath.Join(dir, "0.13-orphans.db"))
 	require.NoError(t, err)
 
-	db, err := dbm.NewGoLevelDB("0.13-orphans", dir)
+	db, err := dbm.NewGoLevelDB("0.13-orphans", dir, nil)
 	require.NoError(t, err)
 
 	// Repair the database.

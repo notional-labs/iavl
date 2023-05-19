@@ -1,0 +1,9 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory `/Users/khanh/iavl4'
+echo "--> Running linter"
+go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.51.2 run --timeout=10m
+echo "--> Running go test"
+go test ./... -ldflags "-X github.com/cosmos/iavl.Version=1.0.0-alpha.1-42-g41c46c9 -X github.com/cosmos/iavl.Commit=41c46c981d4eb5582902da0a0129f33830bb2fcd -X github.com/cosmos/iavl.Branch=master" -v 
+go install ./cmd/iaviewer
+make: Leaving directory `/Users/khanh/iavl4'
+ 

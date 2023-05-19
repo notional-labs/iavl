@@ -1,0 +1,1 @@
+{"buildTargets":["all","bench","delve","explorecpu","exploremem","format","fullbench","install","lint","lint-fix","profile","test","test-short","tools"],"launchTargets":[],"customConfigurationProvider":{"workspaceBrowse":{"browsePath":[],"compilerArgs":[]},"fileIndex":[]}}
