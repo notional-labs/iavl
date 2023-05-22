@@ -279,7 +279,7 @@ func TestMutableTree_DeleteVersionsRange(t *testing.T) {
 
 func TestMutableTree_InitialVersion(t *testing.T) {
 	memDB := db.NewMemDB()
-	tree, err := NewMutableTreeWithOpts(memDB, 0, &Options{InitialVersion: 9}, false)
+	tree, err := NewMutableTreeWithOpts(memDB, 0, &Options{InitialVersion: 9}, false, DefaultFlushThreshold)
 	require.NoError(t, err)
 
 	tree.Set([]byte("a"), []byte{0x01})
@@ -293,20 +293,20 @@ func TestMutableTree_InitialVersion(t *testing.T) {
 	assert.EqualValues(t, 10, version)
 
 	// Reloading the tree with the same initial version is fine
-	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{InitialVersion: 9}, false)
+	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{InitialVersion: 9}, false, DefaultFlushThreshold)
 	require.NoError(t, err)
 	version, err = tree.Load()
 	require.NoError(t, err)
 	assert.EqualValues(t, 10, version)
 
 	// Reloading the tree with an initial version beyond the lowest should error
-	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{InitialVersion: 10}, false)
+	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{InitialVersion: 10}, false, DefaultFlushThreshold)
 	require.NoError(t, err)
 	_, err = tree.Load()
 	require.Error(t, err)
 
 	// Reloading the tree with a lower initial version is fine, and new versions can be produced
-	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{InitialVersion: 3}, false)
+	tree, err = NewMutableTreeWithOpts(memDB, 0, &Options{InitialVersion: 3}, false, DefaultFlushThreshold)
 	require.NoError(t, err)
 	version, err = tree.Load()
 	require.NoError(t, err)

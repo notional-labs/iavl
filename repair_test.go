@@ -32,7 +32,7 @@ func TestRepair013Orphans(t *testing.T) {
 	assert.EqualValues(t, 8, repaired)
 
 	// Load the database.
-	tree, err := NewMutableTreeWithOpts(db, 0, &Options{Sync: true}, false)
+	tree, err := NewMutableTreeWithOpts(db, 0, &Options{Sync: true}, false, DefaultFlushThreshold)
 	require.NoError(t, err)
 	version, err := tree.Load()
 	require.NoError(t, err)

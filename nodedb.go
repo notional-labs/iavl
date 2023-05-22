@@ -79,9 +79,10 @@ type nodeDB struct {
 	latestVersion  int64            // Latest version of nodeDB.
 	nodeCache      cache.Cache      // Cache for nodes in the regular tree that consists of key-value pairs at any version.
 	fastNodeCache  cache.Cache      // Cache for nodes in the fast index that represents only key-value pairs at the latest version.
+	flushThreshold int              // flush threshold limits the size of commit batches
 }
 
-func newNodeDB(db dbm.DB, cacheSize int, opts *Options) *nodeDB {
+func newNodeDB(db dbm.DB, cacheSize int, opts *Options, flushThreshold int) *nodeDB {
 	if opts == nil {
 		o := DefaultOptions()
 		opts = &o
@@ -95,14 +96,22 @@ func newNodeDB(db dbm.DB, cacheSize int, opts *Options) *nodeDB {
 
 	return &nodeDB{
 		db:             db,
-		batch:          db.NewBatch(),
+		batch:          NewBatch(db, flushThreshold),
 		opts:           *opts,
 		latestVersion:  0, // initially invalid
 		nodeCache:      cache.New(cacheSize),
 		fastNodeCache:  cache.New(fastNodeCacheSize),
 		versionReaders: make(map[int64]uint32, 8),
 		storageVersion: string(storeVersion),
+		flushThreshold: flushThreshold,
 	}
+}
+
+func NewBatch(db dbm.DB, flushThreshold int) dbm.Batch {
+	if flushThreshold == 0 {
+		return db.NewBatch()
+	}
+	return NewBatchWithFlusher(db, flushThreshold)
 }
 
 // GetNode gets a node from memory or disk. If it is an inner node, it does not
@@ -391,7 +400,7 @@ func (ndb *nodeDB) resetBatch() error {
 		return err
 	}
 
-	ndb.batch = ndb.db.NewBatch()
+	ndb.batch = NewBatch(ndb.db, ndb.flushThreshold)
 
 	return nil
 }
@@ -792,6 +801,9 @@ func (ndb *nodeDB) traverseFastNodes(fn func(k, v []byte) error) error {
 
 // Traverse orphans ending at a certain version. return error if any, nil otherwise
 func (ndb *nodeDB) traverseOrphansVersion(version int64, fn func(k, v []byte) error) error {
+	if version == 2 {
+		fmt.Println("vn")
+	}
 	return ndb.traversePrefix(orphanKeyFormat.Key(version), fn)
 }
 
@@ -879,7 +891,7 @@ func (ndb *nodeDB) Commit() error {
 	}
 
 	ndb.batch.Close()
-	ndb.batch = ndb.db.NewBatch()
+	ndb.batch = NewBatch(ndb.db, ndb.flushThreshold)
 
 	return nil
 }

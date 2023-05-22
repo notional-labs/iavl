@@ -43,12 +43,12 @@ type MutableTree struct {
 
 // NewMutableTree returns a new tree with the specified cache size and datastore.
 func NewMutableTree(db dbm.DB, cacheSize int, skipFastStorageUpgrade bool) (*MutableTree, error) {
-	return NewMutableTreeWithOpts(db, cacheSize, nil, skipFastStorageUpgrade)
+	return NewMutableTreeWithOpts(db, cacheSize, nil, skipFastStorageUpgrade, DefaultFlushThreshold)
 }
 
 // NewMutableTreeWithOpts returns a new tree with the specified options.
-func NewMutableTreeWithOpts(db dbm.DB, cacheSize int, opts *Options, skipFastStorageUpgrade bool) (*MutableTree, error) {
-	ndb := newNodeDB(db, cacheSize, opts)
+func NewMutableTreeWithOpts(db dbm.DB, cacheSize int, opts *Options, skipFastStorageUpgrade bool, flushThreshold int) (*MutableTree, error) {
+	ndb := newNodeDB(db, cacheSize, opts, flushThreshold)
 	head := &ImmutableTree{ndb: ndb, skipFastStorageUpgrade: skipFastStorageUpgrade}
 
 	return &MutableTree{
@@ -1021,6 +1021,10 @@ func (tree *MutableTree) DeleteVersions(versions ...int64) error {
 			fromVersion = version
 		}
 		intervals[fromVersion]++
+	}
+
+	if len(versions) == 4 && versions[3] == 8 {
+		fmt.Println("vn")
 	}
 
 	for fromVersion, sortedBatchSize := range intervals {
