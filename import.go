@@ -47,7 +47,7 @@ func newImporter(tree *MutableTree, version int64) (*Importer, error) {
 	return &Importer{
 		tree:    tree,
 		version: version,
-		batch:   tree.ndb.db.NewBatch(),
+		batch:   NewBatch(tree.ndb.db, tree.ndb.flushThreshold),
 		stack:   make([]*Node, 0, 8),
 	}, nil
 }
@@ -145,7 +145,7 @@ func (i *Importer) Add(exportNode *ExportNode) error {
 			return err
 		}
 		i.batch.Close()
-		i.batch = i.tree.ndb.db.NewBatch()
+		i.batch = NewBatch(i.tree.ndb.db, i.tree.ndb.flushThreshold)
 		i.batchSize = 0
 	}
 

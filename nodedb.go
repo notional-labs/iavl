@@ -79,9 +79,10 @@ type nodeDB struct {
 	latestVersion  int64            // Latest version of nodeDB.
 	nodeCache      cache.Cache      // Cache for nodes in the regular tree that consists of key-value pairs at any version.
 	fastNodeCache  cache.Cache      // Cache for nodes in the fast index that represents only key-value pairs at the latest version.
+	flushThreshold int
 }
 
-func newNodeDB(db dbm.DB, cacheSize int, opts *Options) *nodeDB {
+func newNodeDB(db dbm.DB, cacheSize int, opts *Options, flushThreshold int) *nodeDB {
 	if opts == nil {
 		o := DefaultOptions()
 		opts = &o
@@ -95,13 +96,22 @@ func newNodeDB(db dbm.DB, cacheSize int, opts *Options) *nodeDB {
 
 	return &nodeDB{
 		db:             db,
-		batch:          db.NewBatch(),
+		batch:          NewBatch(db, flushThreshold),
 		opts:           *opts,
 		latestVersion:  0, // initially invalid
 		nodeCache:      cache.New(cacheSize),
 		fastNodeCache:  cache.New(fastNodeCacheSize),
 		versionReaders: make(map[int64]uint32, 8),
 		storageVersion: string(storeVersion),
+		flushThreshold: flushThreshold,
+	}
+}
+
+func NewBatch(db dbm.DB, flushThreshold int) dbm.Batch {
+	if flushThreshold == 0 {
+		return db.NewBatch()
+	} else {
+		return NewBatchWithFlusher(db, flushThreshold)
 	}
 }
 
@@ -391,7 +401,7 @@ func (ndb *nodeDB) resetBatch() error {
 		return err
 	}
 
-	ndb.batch = ndb.db.NewBatch()
+	ndb.batch = NewBatch(ndb.db, ndb.flushThreshold)
 
 	return nil
 }
@@ -879,7 +889,8 @@ func (ndb *nodeDB) Commit() error {
 	}
 
 	ndb.batch.Close()
-	ndb.batch = ndb.db.NewBatch()
+	fmt.Println("commit with flushThreshold = ", ndb.flushThreshold)
+	ndb.batch = NewBatch(ndb.db, ndb.flushThreshold)
 
 	return nil
 }
@@ -1008,6 +1019,7 @@ func (ndb *nodeDB) orphans() ([][]byte, error) {
 // Not efficient.
 // NOTE: DB cannot implement Size() because
 // mutations are not always synchronous.
+//
 //nolint:unused
 func (ndb *nodeDB) size() int {
 	size := 0
