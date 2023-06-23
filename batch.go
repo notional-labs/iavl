@@ -58,7 +58,7 @@ func (b *BatchWithFlusher) Set(key []byte, value []byte) error {
 		return err
 	}
 	if batchSizeAfter > b.flushThreshold {
-		fmt.Println("commit with flushThreshold = ", b.flushThreshold)
+		fmt.Println("reset batch with flushThreshold = ", b.flushThreshold)
 		err = b.batch.Write()
 		if err != nil {
 			return err
@@ -86,7 +86,7 @@ func (b *BatchWithFlusher) Delete(key []byte) error {
 		return err
 	}
 	if batchSizeAfter > b.flushThreshold {
-		fmt.Println("commit with flushThreshold = ", b.flushThreshold)
+		fmt.Println("reset batch with flushThreshold = ", b.flushThreshold)
 		err = b.batch.Write()
 		if err != nil {
 			return err
